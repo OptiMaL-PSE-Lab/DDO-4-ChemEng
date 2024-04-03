@@ -1,6 +1,6 @@
 # 🧪 DDO-4-ChemEng 📊
 
-<img src="https://github.com/EmPajak21/DDO-4-ChemEng/blob/main/SS/OptiML.png" alt="Image Description" width="50">
+<img src="https://github.com/EmPajak21/DDO-4-ChemEng/blob/main/SS/optiml_light_short_whitebackground.png" width="200">
 
 
 Welcome to the DDO-4-ChemEng repository! 🎉
