@@ -14,6 +14,11 @@ class Test_function:
     # --- initializing function --- #
     #################################    
     def __init__(self, func_type, n_x, track_x, x_shift):
+
+        '''
+        x_shift: this is the starting point that is set for each repitition (5 per algorithm and function)
+        it was randomly chosen for each dimension between -3 and 3
+        '''
         
         # initialize lists
         self.f_list = []; self.x_list = []; 
@@ -33,9 +38,17 @@ class Test_function:
         if self.func_type == 'Rosenbrock_f':
             '''
             Test function: Rosenbrock function (http://benchmarkfcns.xyz/benchmarkfcns/rosenbrockfcn.html)
+            Note: Website does not work anymore (checked Feb_24_2024), this one does: https://www.sfu.ca/~ssurjano/rosen.html
             Note:
                 works only for vectors
+
+            
+            x: this is the argument that the function gets during the evaluation.
+            The way this benchmarking is coded is, that there is a coordinate shift for each repitition to x_shift. Meaning all 
+            optimisation algorithms provide solutions based on x_shift. In order to receive the true value of the objective
+            function during evaluation, the candidate x has to be added to x_shift. 
             '''
+
             x = np.array(x)
             x = x.reshape((self.n_x,1))
             x = x + self.x_shift
@@ -101,6 +114,8 @@ class Test_function:
             x = np.array(x)
             x = x.reshape((self.n_x,1))
             x = x + self.x_shift
+
+
             a = 20.; b=0.2; c=2.*np.pi
         
             x = x.reshape((self.n_x,1))
@@ -115,6 +130,7 @@ class Test_function:
             
             # return objective
             return z
+            
         
     ####################    
     # re-arrange lists #

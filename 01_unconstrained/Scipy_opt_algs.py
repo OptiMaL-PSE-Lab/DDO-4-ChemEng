@@ -19,6 +19,9 @@ def Random_search(f, n_p, bounds_rs, iter_rs):
     '''
     This function is a naive optimization routine that randomly samples the 
     allowed space and returns the best value.
+
+    n_p: dimensions
+    iter_rs: number of points to create
     '''
 
     # arrays to store sampled points
@@ -70,9 +73,14 @@ def opt_COBYLA(f, x_dim, bounds, iter_tot):
     '''
     params: parameters that define the rbf model
     X:      matrix of previous datapoints
+    iter_tot: evaluation budget, given by f_eval_
     '''
 
-    n_rs = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point
+    n_rs = int(min(100,max(iter_tot*.05,5)))
+
+    '''
+    n_rs: iterations to find a good starting point, 5% of iter_tot, at least 5, at max 100
+    '''
 
     # evaluate first point
     f_best, x_best = Random_search(f, x_dim, bounds, n_rs)
