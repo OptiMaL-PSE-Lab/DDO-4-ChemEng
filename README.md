@@ -5,4 +5,4 @@ Section 1: Data-driven (Derivative free) optimization
 
 Section 2: Constrained & Safe Data-driven (Derivative free) optimization
 
-Section 3: High dimensional data-driven optimizatio
+Section 3: High dimensional data-driven optimization
