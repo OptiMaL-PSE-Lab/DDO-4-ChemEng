@@ -8,6 +8,8 @@ This repository is a work-in-progress (WIP) project running in parallel with the
 
 ## Sections 📂
 
+test
+
 ### 01_unconstrained
 This section contains algorithm benchmarking for unconstrained optimization problems 📈
 
