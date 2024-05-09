@@ -2,7 +2,6 @@
 
 <img src="https://github.com/EmPajak21/DDO-4-ChemEng/blob/main/SS/optiml_light_short_whitebackground.png" width="200">
 
-
 Welcome to the DDO-4-ChemEng repository! 🎉
 
 This repository is a work-in-progress (WIP) project running in parallel with the book chapter titled "Data-driven optimization for chemical processes: machine learning and artificial intelligence" 📚
