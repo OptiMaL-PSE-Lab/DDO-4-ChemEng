@@ -84,7 +84,7 @@ def opt_DYCORS(f, x_dim, bounds, iter_tot):
     result = controller.run()
     #print(result)
 
-    return result
+    return result, None, None, None
 
 ####################
 # DYCORS algorithm #
@@ -119,7 +119,7 @@ def opt_SRBF(f, x_dim, bounds, iter_tot):
     result = controller.run()
     #print(result)
 
-    return result
+    return result, None, None, None
 
 ####################
 # SOPStrategy algorithm #
@@ -154,7 +154,7 @@ def opt_SOP(f, x_dim, bounds, iter_tot):
     result = controller.run()
     #print(result)
 
-    return result
+    return result, None, None, None
 
 
 
