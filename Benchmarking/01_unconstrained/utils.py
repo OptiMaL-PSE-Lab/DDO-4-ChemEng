@@ -14,7 +14,6 @@ import copy
 # importing algorithms
 from BFGS_multistart import* 
 from Stochastic_local_search import* 
-from Cuadratic_opt import*
 from Scipy_opt_algs import*
 from BO_NpScpy import*
 from COBYQA import *
