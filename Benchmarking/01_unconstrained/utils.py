@@ -213,7 +213,7 @@ def ML4CE_uncon_table(
         dim_S           = 'D'+str(N_x_l[i_dim])
         alg_perf[dim_S] = {}
         for i_alg in algs_test:
-            # print('==  ',str(i_alg.__name__),' ==')
+            print('==  ',str(i_alg.__name__),' ==')
             alg_perf[dim_S][str(i_alg.__name__)] = {}
             # for every function
             for i_fun in range(n_f):      
@@ -225,6 +225,7 @@ def ML4CE_uncon_table(
                 # score performance
                 perf_ = ( (higall_[start_[i_dim]:] - trial_[start_[i_dim]:])
                         /(higall_[start_[i_dim]:] - lowall_[start_[i_dim]:]) )
+
                 alg_perf[dim_S][str(i_alg.__name__)][funcs_test[i_fun]] = copy.deepcopy(np.sum(perf_)/len(perf_))
 
     cell_text_global = []

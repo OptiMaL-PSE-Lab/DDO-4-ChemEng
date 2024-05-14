@@ -32,7 +32,7 @@ def Random_search(f, n_p, bounds_rs, iter_rs):
     for sample_i in range(iter_rs):
         x_trial = np.random.uniform(0, 1, n_p)*bounds_range + bounds_bias # sampling
         localx[:,sample_i] = x_trial
-        localval[sample_i] = f(x_trial) # f
+        localval[sample_i] = f.fun_test(x_trial) # f
     # choosing the best
     minindex = np.argmin(localval)
     f_b      = localval[minindex]
@@ -57,9 +57,11 @@ def opt_SnobFit(f, x_dim, bounds, iter_tot):
     iter_          = iter_tot - n_rs
 
     result, history = \
-    minimize(f, x_best, bounds, iter_, method='SnobFit') 
+    minimize(f.fun_test, x_best, bounds, iter_, method='SnobFit') 
 
-    return result.optpar, result.optval
+    print(result.optpar, result.optval)
+
+    return result.optpar, result.optval, None, None
 
 ####################
 # Bobyqa  algorithm #
@@ -74,11 +76,11 @@ def opt_Bobyqa(f, x_dim, bounds, iter_tot):
     n_rs = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point
 
     # evaluate first point
-    f_best, x_best = Random_search(f, x_dim, bounds, n_rs)
+    f_best, x_best = Random_search(f.fun_test, x_dim, bounds, n_rs)
     iter_          = iter_tot - n_rs
 
     result, history = \
-    minimize(f, x_best, bounds, iter_, method='Bobyqa') 
+    minimize(f.fun_test, x_best, bounds, iter_, method='Bobyqa') 
 
     return result.optpar, result.optval
 
