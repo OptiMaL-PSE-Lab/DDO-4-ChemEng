@@ -17,6 +17,7 @@ from Stochastic_local_search import*
 from Cuadratic_opt import*
 from Scipy_opt_algs import*
 from BO_NpScpy import*
+from COBYQA import *
 # importing test functions
 from test_function import* 
 import os
@@ -24,6 +25,63 @@ from datetime import datetime
 from pylab import grid
 import pickle
 
+'''
+how do the algorithms deal with start-data?
+
+I SHOULD MANUALLY CHECK THE f_eval
+
+For now: Just provide a global starting point for all methods.
+
+LS_QM:
+- initiates numpy array f_list of shape (trajectory length) and x_list of shape (trajectory_length, dimensions)
+- f_list and x_list are filled with 1e-13 (practically zero)
+- then n_rs = int(max(x_dim+1,iter_tot*.05)) is determined
+- then n_rs points are generated with a custom Random_search_Qopt and inserted into the first n_rs positions in x_list
+- THIS UPPER-PART IS AFFECTED BY THE LIST PROVIDED. BASICALLY, n_rs has to be taken from somewhere (either in the algorithm itself
+or provided within the algorithm itself. Best would be to have it as an argument for the generation of points)
+- then the first n_rs positions in f_list are filled by evaluating x_list
+- in the very end, f_list and x_list are completely filled (however, the points achieved are taken from t_.best_f so f_list and x_list are not returned
+- TODO: The first quadratic model is built using the n_rs points provided. This is the same as the BO case his could then be comparable with the BO-case
+
+- here I found out that the length of the f_eval (which creates the length of the list for the starting points) is 
+dependend on the length of this list of N_x_l. By this, when I comment-out several dimensions, f_eval has not the correct length
+
+COBYLA:
+- n_rs = int(max(x_dim+1,iter_tot*.05)) is used to determine number of starting points
+- Random search is used to determine the best point
+- best point is then given to the scipy implementation
+- the list for x and f is managed in the objective function
+- TODO: check how the first model is built here
+
+COBYQA:
+- TODO: It is not accessable which points are used to build the first model. Only x_best is provided to the algorithm. 
+        COBLYQA then probably builds a model in a certain radius around this, but the points it uses are not accessible
+-       Therefore this is different to BO and LS_QM, who could technically be build based on the same datapoints.
+- same as COBYLA
+
+
+BO:
+- TODO: needs to be re-done with manual insertion of dimensions and iterations (see LS_QM last points)
+- produces 5 starting points per dimension to build the initial models. they are in the shape (n_points,n_dimension)
+- compute_data then takes the points and evaulates the points in the objective function and builds the first GP
+
+
+The algorithms should be adjusted in a way where they receive the list of starting points, evaluate the starting points and 
+then pick the best one. So this functionality should remain within the algorithms.
+
+def ML4CE_uncon_gen_start(dim, reps, bounds, function, seed)
+    think about here: at which point is this function to be called?
+    should be for each function the same starting points for each dimension for each algorithm for each rep. 
+    this means depending on the repetition
+    there should be a list of starting points generated in the beginning of the benchmarking and depending on the 
+    so we need a dictionary, that has a list of dimensions, per dimension a list of all functions and per function a list for all repetitions
+    then, the algorithms take a list of starting points depending on the dimension, the function and the repetition. 
+    by this, all algorithm get the same set of starting points per repetition, dimension and function
+    depending on how the algorithms deal with these initial points I have to check. probably then just the 
+    evaluation of f_best and x_best anstelle der random search
+    since BO needs 10 starting points to create the first model, it is probably the easiest, to 
+
+'''
 
 def ML4CE_uncon_eval(
         N_x_l, 
@@ -59,7 +117,6 @@ def ML4CE_uncon_eval(
             all_f_                                       = []
             randShift_l                                  = np.random.uniform(-3,3, (reps,N_x_))
             
-            
             ##############
             # Algorithms #
             ##############
@@ -84,7 +141,7 @@ def ML4CE_uncon_eval(
                     t_.best_f_list()                    # List of best points so far
                     t_.pad_or_truncate(f_eval_)
                     # store result
-                    trajectories[dim_S][i_function][str(i_algorithm.__name__)].append(copy.deepcopy(t_.best_f_c))     
+                    trajectories[dim_S][i_function][str(i_algorithm.__name__)].append(copy.deepcopy(t_.best_f_c))
                 # statistics from each algorithm for a function    
                 l_   = np.array(trajectories[dim_S][i_function][str(i_algorithm.__name__)])
                 m_   = np.mean(l_, axis=0)

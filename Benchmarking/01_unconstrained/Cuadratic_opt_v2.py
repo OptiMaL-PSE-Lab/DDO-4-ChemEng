@@ -189,7 +189,8 @@ def Random_search_Qopt(f, n_p, bounds_rs, iter_rs):
 
     # arrays to store sampled points
     localx   = np.zeros((iter_rs,n_p))  # points sampled
-    localval = np.zeros((iter_rs))        # function values sampled
+    localval = np.zeros((iter_rs))      # function values sampled
+
     # bounds
     bounds_range = bounds_rs[:,1] - bounds_rs[:,0]
     bounds_bias  = bounds_rs[:,0]
@@ -198,6 +199,7 @@ def Random_search_Qopt(f, n_p, bounds_rs, iter_rs):
         x_trial = np.random.uniform(0, 1, n_p)*bounds_range + bounds_bias # sampling
         localx[sample_i,:] = x_trial
         localval[sample_i] = f(x_trial) # f
+
     # choosing the best
     minindex = np.argmin(localval)
     f_b      = localval[minindex]
@@ -247,7 +249,6 @@ def LS_QM_v2(f, x_dim, bounds, iter_tot, x_start = False):
     '''
     This function is an optimization routine following a local random search
     '''
-
     r_t  = 0.5                            # function on bounds_ss 
 
     # store f as Test_function object
@@ -259,54 +260,42 @@ def LS_QM_v2(f, x_dim, bounds, iter_tot, x_start = False):
     gamma_r = 0.5
     gamma_i = 2.
 
-
     if x_start == False:
 
-        # iterations to find good starting point
+        # iterations to find good starting point (and also no of points to build the model around)
         n_rs = int(max(x_dim+1,iter_tot*.05))
 
-        print('n_rs = ' + str(n_rs))
-
         # function of iter_ss
-        n_i  = iter_tot - n_rs
-
-        print('n_i = ' + str(n_i))
+        n_i  = iter_tot - n_rs # these are the remaining iterations
 
         # array for estimating models
         f_list  = np.ones((iter_tot))*1e13
-        print('f_list = ' + str(f_list))
-
         x_list  = np.zeros((iter_tot,x_dim))
-        print('x_list = ' + str(x_list))
 
         # evaluate first points
         f_list[:n_rs], x_list[:n_rs,:] = Random_search_Qopt(f, x_dim, bounds, n_rs)
-
-        print('f_list = ' + str(f_list))
-        print('x_list = ' + str(x_list))       
 
         # find best point
         minindex                       = np.argmin(f_list)
         f_best                         = f_list[minindex]
         x_best                         = x_list[minindex,:]
 
-        print('f_best = ' + str(f_best))
-        print('x_best = ' + str(x_best))
 
-    else:
+    # # for plotting
+    # else:
 
-        # subtract for given starting point
-        n_rs = 1
+    #     # subtract for given starting point
+    #     n_rs = 1
 
-        # function of iter_ss
-        n_i = iter_tot - n_rs
+    #     # function of iter_ss
+    #     n_i = iter_tot - n_rs
 
-        # array for estimating models
-        f_list  = np.ones((iter_tot))*1e13
-        x_list  = np.zeros((iter_tot,x_dim))
+    #     # array for estimating models
+    #     f_list  = np.ones((iter_tot))*1e13
+    #     x_list  = np.zeros((iter_tot,x_dim))
 
-        x_best = x_list[0,:] = o.x0[0].flatten() # TODO this needs to be automatized and adjusted to higher dimensions - works only for 2
-        f_best = f_list[0] = f(x_best)
+    #     x_best = x_list[0,:] = o.x0[0].flatten() # TODO this needs to be automatized and adjusted to higher dimensions - works only for 2
+    #     f_best = f_list[0] = f(x_best)
 
     # === Estimate quadratic model === #
     LSQM_m = Quad_Reg_model(x_list[0:n_rs,:], f_list[0:n_rs].reshape(-1,1), x_best)
@@ -342,8 +331,8 @@ def LS_QM_v2(f, x_dim, bounds, iter_tot, x_start = False):
         x_b_      = x_list[minindex_,:]
 
         # re build quadratic model
-    #print('x_list = ',x_list)
-    #print('f_list = ',f_list)
+    # print('x_list = ',x_list)
+    # print('f_list = ',f_list)
     return x_best, f_best, None, None #, f_list, x_list
 
 

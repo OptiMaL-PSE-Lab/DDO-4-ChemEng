@@ -73,7 +73,6 @@ def COBYQA(
         # x_start needs to be added manually to the trajectory because it is not stored by scipy.minimize
         # trajectory = [x_start]
 
-
         n_rs = int(min(100,max(f_eval_*.05,5)))       # iterations to find good starting point
 
         # evaluate first point
