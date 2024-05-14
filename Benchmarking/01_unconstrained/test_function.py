@@ -13,7 +13,7 @@ class Test_function:
     #################################
     # --- initializing function --- #
     #################################    
-    def __init__(self, func_type, n_x, track_x, x_shift):
+    def __init__(self, func_type, n_x, track_x, x_shift, bounds):
 
         '''
         x_shift: this is the starting point that is set for each repitition (5 per algorithm and function)
@@ -27,6 +27,13 @@ class Test_function:
         self.n_x       = n_x
         self.track_x   = track_x
         self.x_shift   = x_shift
+        
+        # for opt_DYCORS !! 
+        self.dim      = n_x
+        self.lb       = bounds[:,0]
+        self.ub       = bounds[:,1]
+        self.int_var  = np.array([])
+        self.cont_var = np.arange(0, n_x)
         self.history = []
 
         if self.func_type == 'Rosenbrock_f':

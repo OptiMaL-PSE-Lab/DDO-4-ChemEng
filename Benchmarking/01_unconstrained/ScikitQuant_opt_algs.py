@@ -59,8 +59,6 @@ def opt_SnobFit(f, x_dim, bounds, iter_tot):
     result, history = \
     minimize(f.fun_test, x_best, bounds, iter_, method='SnobFit') 
 
-    print(result.optpar, result.optval)
-
     return result.optpar, result.optval, None, None
 
 ####################
