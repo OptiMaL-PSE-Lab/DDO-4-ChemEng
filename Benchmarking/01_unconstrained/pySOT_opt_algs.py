@@ -43,7 +43,7 @@ def Random_searchDYCORS(f, n_p, bounds_rs, iter_rs):
     for sample_i in range(iter_rs):
         x_trial = np.random.uniform(0, 1, n_p)*bounds_range + bounds_bias # sampling
         localx[:,sample_i] = x_trial
-        localval[sample_i] = f.eval(x_trial) # f
+        localval[sample_i] = f.fun_test(x_trial) # f
     # choosing the best
     minindex = np.argmin(localval)
     f_b      = localval[minindex]
@@ -82,7 +82,7 @@ def opt_DYCORS(f, x_dim, bounds, iter_tot):
         batch_size=1)
 
     result = controller.run()
-    #print(result)
+    print(result)
 
     return result, None, None, None
 

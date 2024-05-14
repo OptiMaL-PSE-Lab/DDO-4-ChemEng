@@ -133,7 +133,7 @@ def ML4CE_uncon_eval(
                     # random shift
                     x_shift_ = randShift_l[i_rep,:].reshape((N_x_,1))
                     # test function
-                    t_       = Test_function(i_function, N_x_, False, x_shift_)
+                    t_       = Test_function(i_function, N_x_, False, x_shift_, bounds_)
                     # algorithm
                     # a, b, team_names, cids = i_algorithm(t_.fun_test, N_x_, bounds_, f_eval_)
                     a, b, team_names, cids = i_algorithm(t_, N_x_, bounds_, f_eval_)
