@@ -82,7 +82,10 @@ def opt_COBYLA(f, x_dim, bounds, iter_tot, x_start=False):
 
 
     else:
-        n_rs = int(min(100,max(iter_tot*.05,5)))
+        # n_rs = int(min(100,max(iter_tot*.05,5))) # old
+
+        # iterations to find good starting point
+        n_rs = int(max(x_dim+1,iter_tot*.05))
 
         '''
         n_rs: iterations to find a good starting point, 5% of iter_tot, at least 5, at max 100

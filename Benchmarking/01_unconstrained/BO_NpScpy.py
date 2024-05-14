@@ -319,6 +319,10 @@ class GP_optimizer:
            
         Xtrain = np.array(Xtrain)
         ytrain = np.array(ytrain)
+
+        print('this is how the computed data looks like: ')
+        print(Xtrain.reshape(ndata,ndim, order='F'), ytrain.reshape(ndata,1))
+        raise
         
         return Xtrain.reshape(ndata,ndim, order='F'), ytrain.reshape(ndata,1)
 
@@ -361,7 +365,7 @@ class GP_optimizer:
         # function definitions
         xi     = 0.1
         obj_f  = GP.GP_inference_np(x)   # GP evaluation
-        if obj_f[1] <= 1e-7:
+        if obj_f[1] <= 1e-7: # variance check if I am evaulating too close to a known
             return 0.0
         else:
             f_plus = self.f_plus_EI          # best function value so far
@@ -553,11 +557,13 @@ def BO_np_scipy(f, x_dim, bounds, iter_tot, x_start=False):
 
         d_     = ['data0', f.init_points[0], 10] #TODO this needs to be automatized to allow x0 for more starting points
 
-        print(d_)
-
 
     else:
-        n_rs   = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point
+        # n_rs   = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point # old
+        x_dim = 2
+        iter_tot = 20
+
+        n_rs = int(max(x_dim+1,iter_tot*.05))
         d_     = ['int', bounds, n_rs]
 
         print(d_)
