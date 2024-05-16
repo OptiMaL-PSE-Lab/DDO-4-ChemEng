@@ -70,27 +70,23 @@ def opt_Powell(f, x_dim, bounds, iter_tot):
 # COBYLA algorithm #
 ####################
 
-def opt_COBYLA(f, x_dim, bounds, iter_tot, x_start=False):
+def opt_COBYLA(f, x_dim, bounds, iter_tot, has_x0 =False):
     '''
     params: parameters that define the rbf model
     X:      matrix of previous datapoints
     iter_tot: evaluation budget, given by f_eval_
     '''
-    if x_start == True:
+    if has_x0 == True:
+
         iter_          = iter_tot - 1
         x_best = f.x0[0].flatten()
-
 
     else:
         # n_rs = int(min(100,max(iter_tot*.05,5))) # old
 
         # iterations to find good starting point
         n_rs = int(max(x_dim+1,iter_tot*.05))
-
-        '''
-        n_rs: iterations to find a good starting point, 5% of iter_tot, at least 5, at max 100
-        '''
-
+        
         # evaluate first point
         f_best, x_best = Random_search(f, x_dim, bounds, n_rs)
         iter_          = iter_tot - n_rs
