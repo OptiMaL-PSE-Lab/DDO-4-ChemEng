@@ -44,20 +44,25 @@ def Random_search(f, n_p, bounds_rs, iter_rs):
 # SnobFit algorithm #
 ####################
 
-def opt_SnobFit(f, x_dim, bounds, iter_tot):
+def opt_SnobFit(f, x_dim, bounds, iter_tot, has_x0 = False):
     '''
     params: parameters that define the rbf model
     X:      matrix of previous datapoints
     '''
 
-    n_rs = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point
+    if has_x0 == True:
 
-    # evaluate first point
-    f_best, x_best = Random_search(f, x_dim, bounds, n_rs)
-    iter_          = iter_tot - n_rs
+        iter_          = iter_tot - 1
+        result, history = minimize(f.fun_test, f.x0[0].flatten() , bounds, iter_, method='SnobFit') 
 
-    result, history = \
-    minimize(f.fun_test, x_best, bounds, iter_, method='SnobFit') 
+    else:
+
+        n_rs = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point
+
+        # evaluate first point
+        f_best, x_best = Random_search(f, x_dim, bounds, n_rs)
+        iter_          = iter_tot - n_rs
+        result, history = minimize(f.fun_test, x_best, bounds, iter_, method='SnobFit') 
 
     return result.optpar, result.optval, None, None
 

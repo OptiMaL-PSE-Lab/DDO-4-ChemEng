@@ -44,6 +44,7 @@ def Random_searchDYCORS(f, n_p, bounds_rs, iter_rs):
         x_trial = np.random.uniform(0, 1, n_p)*bounds_range + bounds_bias # sampling
         localx[:,sample_i] = x_trial
         localval[sample_i] = f.fun_test(x_trial) # f
+        
     # choosing the best
     minindex = np.argmin(localval)
     f_b      = localval[minindex]
@@ -90,7 +91,7 @@ def opt_DYCORS(f, x_dim, bounds, iter_tot):
 # DYCORS algorithm #
 ####################
 
-def opt_SRBF(f, x_dim, bounds, iter_tot):
+def opt_SRBF(f, x_dim, bounds, iter_tot, has_x0 = False):
     '''
     Combining radial basis function surrogates and dynamic coordinate search 
     in high-dimensional expensive black-box optimization

@@ -454,8 +454,8 @@ class GP_optimizer:
         '''
         # internal variable calls
         store_data, Xtrain, ytrain   = self.store_data, self.Xtrain, self.ytrain
-        multi_hyper, iter_opt        = self.multi_hyper, self.iter_opt
         ndim, ndat, obj_f, multi_opt = self.ndim, self.ndat, self.obj_f, self.multi_opt
+        multi_hyper, iter_opt        = self.multi_hyper, self.iter_opt
         add_data, bounds   = self.add_data, self.bounds
         create_data_arrays           = self.create_data_arrays
         if self.EI_bool==True:
@@ -482,10 +482,9 @@ class GP_optimizer:
         # print('GP_optimizer: optimisation routine: the startvectors for multistart are created using sobol sampling')
         multi_startvec   = sobol_seq.i4_sobol_generate(ndim,multi_opt)
         
-        # print('GP_optimizer: optimisation routine: optimisation starts')
         # optimization -- iterations
-        for i_opt in range(iter_opt):
-            # print('GP_optimizer: optimisation routine: optimization iteration ',i_opt+1)
+        for i_opt in range(iter_opt-ndat):
+
             # --- storing data --- #
             ymean_l, ystd_l = add_data(Xtest_l, ymean_l, ystd_l, i_opt, GP_m)
             
@@ -545,30 +544,21 @@ class GP_optimizer:
 # --- Bayesian Optimization --- #
 #################################
 
-def BO_np_scipy(f, x_dim, bounds, iter_tot, x_start=False):
+def BO_np_scipy(f, x_dim, bounds, iter_tot, has_x0=False):
 
     '''
     params: parameters that define the rbf model
     X:      matrix of previous datapoints
     '''
 
-    if x_start == True:
-
+    if has_x0 == True:
 
         d_     = ['data0', f.init_points[0], 10] #TODO this needs to be automatized to allow x0 for more starting points
 
-
     else:
         # n_rs   = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point # old
-        x_dim = 2
-        iter_tot = 20
-
         n_rs = int(max(x_dim+1,iter_tot*.05))
         d_     = ['int', bounds, n_rs]
-
-        print(d_)
-
-
 
     GP_opt = GP_optimizer(
         f.fun_test, 
