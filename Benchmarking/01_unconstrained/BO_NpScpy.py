@@ -14,7 +14,7 @@ import sobol_seq
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 from scipy.stats import norm
-
+from scipy.optimize import differential_evolution
 class GP_model:
     
     ###########################
@@ -319,10 +319,6 @@ class GP_optimizer:
            
         Xtrain = np.array(Xtrain)
         ytrain = np.array(ytrain)
-
-        print('this is how the computed data looks like: ')
-        print(Xtrain.reshape(ndata,ndim, order='F'), ytrain.reshape(ndata,1))
-        raise
         
         return Xtrain.reshape(ndata,ndim, order='F'), ytrain.reshape(ndata,1)
 
@@ -487,34 +483,52 @@ class GP_optimizer:
 
             # --- storing data --- #
             ymean_l, ystd_l = add_data(Xtest_l, ymean_l, ystd_l, i_opt, GP_m)
+
+            ### new solution ###
             
-            localsol = [0.]*multi_opt           # x-value entries for multistart are re-set to 0
-            localval = np.zeros((multi_opt))    # GP(x) entries for multistart are re-set to 0
+            # find good initial point
+            res = differential_evolution(GP_obj_f, bounds=bounds, args=(GP_m,), 
+                                         maxiter=10, popsize=15)
+            # refine initial point
+            xbest = res.x
+            res = minimize(GP_obj_f, args=(GP_m), x0=xbest, 
+                           method='SLSQP', bounds=bounds)
+            # retrieving solution
+            xnew = res.x
+
+            #### new solution ends ####
+
+            #### Old solution ####
+
+            # localsol = [0.]*multi_opt           # x-value entries for multistart are re-set to 0
+            # localval = np.zeros((multi_opt))    # GP(x) entries for multistart are re-set to 0
             
-            # optimization -- multistart
-            for j in range(multi_opt):
-                # print('GP_optimizer: optimisation routine: optimisation iteration ' + str(i_opt+1) + ' and multistart nr.: ' + str(j+1) + '/' + str(multi_opt) + ' NEEDS TO BE SET BACK TO 10')
-                x_init    = lb + (ub-lb)*multi_startvec[j,:]
+            # # optimization -- multistart
+            # for j in range(multi_opt):
+            #     # print('GP_optimizer: optimisation routine: optimisation iteration ' + str(i_opt+1) + ' and multistart nr.: ' + str(j+1) + '/' + str(multi_opt) + ' NEEDS TO BE SET BACK TO 10')
+            #     x_init    = lb + (ub-lb)*multi_startvec[j,:]
                 
-                # print('GP_optimizer: optimisation routine: optimisation iteration ' + str(i_opt+1) + ' and multistart nr.: ' + str(j+1) + ': objective function gets minimized')
-                # print('GP_optimizer: optimisation routine: optimisation iteration ' + str(i_opt+1) + ' and multistart nr.: ' + str(j+1) + ': This minimization is a loop that ends when the tolerance is reached. Therefore, the length of this loop varies for each start.')
-                # GP optimization
-                res = minimize(GP_obj_f, x_init, args=(GP_m), method='SLSQP',
-                               options=options, bounds=bounds, tol=1e-12)
-                # print('GP_optimizer: optimisation routine: optimisation iteration ' + str(i_opt+1) + ' and multistart nr.: ' + str(j+1) + ': done with minimization of objective function')
-                localsol[j] = res.x
-                if res.success == True:
-                    localval[j] = res.fun
-                else:
-                    localval[j] = np.inf
+            #     # print('GP_optimizer: optimisation routine: optimisation iteration ' + str(i_opt+1) + ' and multistart nr.: ' + str(j+1) + ': objective function gets minimized')
+            #     # print('GP_optimizer: optimisation routine: optimisation iteration ' + str(i_opt+1) + ' and multistart nr.: ' + str(j+1) + ': This minimization is a loop that ends when the tolerance is reached. Therefore, the length of this loop varies for each start.')
+            #     # GP optimization
+            #     res = minimize(GP_obj_f, x_init, args=(GP_m), method='SLSQP',
+            #                    options=options, bounds=bounds, tol=1e-12)
+            #     # print('GP_optimizer: optimisation routine: optimisation iteration ' + str(i_opt+1) + ' and multistart nr.: ' + str(j+1) + ': done with minimization of objective function')
+            #     localsol[j] = res.x
+            #     if res.success == True:
+            #         localval[j] = res.fun
+            #     else:
+            #         localval[j] = np.inf
 
-            # print('GP_optimizer: optimisation routine: now all multistarts for iteration ' + str(i_opt+1) + ' are done and the results are stored in localval')
-            if np.min(localval) == np.inf:
-                print('warning, no feasible solution found')
+            # # print('GP_optimizer: optimisation routine: now all multistarts for iteration ' + str(i_opt+1) + ' are done and the results are stored in localval')
+            # if np.min(localval) == np.inf:
+            #     print('warning, no feasible solution found')
 
-            # print('GP_optimizer: optimisation routine: xnew is the x belonging to the lowest value found in localval for iteration ' + str(i_opt+1))
-            minindex    = np.argmin(localval) # choosing best solution
-            xnew        = localsol[minindex]  # selecting best solution
+            # # print('GP_optimizer: optimisation routine: xnew is the x belonging to the lowest value found in localval for iteration ' + str(i_opt+1))
+            # minindex    = np.argmin(localval) # choosing best solution
+            # xnew        = localsol[minindex]  # selecting best solution
+
+            #### old solution ends ####
 
             xnew   = np.array([xnew]).reshape(1,ndim)
             ynew   = obj_f(xnew)
