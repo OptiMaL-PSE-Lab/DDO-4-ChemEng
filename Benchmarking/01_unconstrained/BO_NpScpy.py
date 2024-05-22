@@ -340,7 +340,8 @@ class GP_optimizer:
         
         elif obj == 2:
             obj_f = GP.GP_inference_np(x)
-            return obj_f[0] - 3*np.sqrt(obj_f[1]) 
+            # return obj_f[0] - 3*np.sqrt(obj_f[1]) # old
+            return obj_f[0] - 2*np.sqrt(obj_f[1])
         
         else:
             print('error, objective for GP not specified')
