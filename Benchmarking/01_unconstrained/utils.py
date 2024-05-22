@@ -102,7 +102,7 @@ def ML4CE_uncon_eval(
         f_eval_             = f_eval_l[i_run]
         dim_S               = 'D'+str(N_x_)
         trajectories[dim_S] = {}
-        bounds_             = np.array([[-5,5] for i in range(N_x_)])
+        bounds_             = np.array([[-7,7] for i in range(N_x_)])
 
         #############
         # Functions #
@@ -149,13 +149,18 @@ def ML4CE_uncon_eval(
                 trajectories[dim_S][i_function]['all means'][str(i_algorithm.__name__)] = copy.deepcopy(m_)
                 trajectories[dim_S][i_function]['all 95'][str(i_algorithm.__name__)]    = copy.deepcopy(q05_)
                 trajectories[dim_S][i_function]['all 05'][str(i_algorithm.__name__)]    = copy.deepcopy(q95_)
-                all_f_.append(copy.deepcopy(m_))
+                # all_f_.append(copy.deepcopy(m_)) # old
+                all_f_.append(copy.deepcopy(l_))
                 info.append({'alg_name': str(i_algorithm.__name__), 'team names': team_names, 'CIDs': cids})
             # statistics for all algorithms for a function       
-            trajectories[dim_S][i_function]['mean']   = np.mean(all_f_, axis=0)
-            trajectories[dim_S][i_function]['median'] = np.median(all_f_, axis=0)
-            trajectories[dim_S][i_function]['q 0']    = np.max(all_f_, axis=0)
-            trajectories[dim_S][i_function]['q 100']  = np.min(all_f_, axis=0)
+            # trajectories[dim_S][i_function]['mean']   = np.mean(all_f_, axis=0)     # old
+            # trajectories[dim_S][i_function]['median'] = np.median(all_f_, axis=0)   # old
+            # trajectories[dim_S][i_function]['q 0']    = np.max(all_f_, axis=0)      # old
+            # trajectories[dim_S][i_function]['q 100']  = np.min(all_f_, axis=0)      # old
+            trajectories[dim_S][i_function]['mean']   = np.mean(all_f_, axis=(0,1))
+            trajectories[dim_S][i_function]['median'] = np.median(all_f_, axis=(0,1))
+            trajectories[dim_S][i_function]['q 0']    = np.max(all_f_, axis=(0,1))
+            trajectories[dim_S][i_function]['q 100']  = np.min(all_f_, axis=(0,1))
 
     if SafeData == True:
         
@@ -349,6 +354,7 @@ def ML4CE_uncon_table_plot(array, functions_test, algorithms_test, N_x_l, home_d
             plt.close()
 
         else:
+            plt.title(algorithms_test[i].__name__)
             plt.show()
 
 
