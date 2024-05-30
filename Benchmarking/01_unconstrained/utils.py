@@ -82,6 +82,17 @@ def ML4CE_uncon_gen_start(dim, reps, bounds, function, seed)
 
 '''
 
+def save_dict(target_folder, data_dict, timestamp):
+    # Create a folder with current date and time
+    folder_path = os.path.join(target_folder, timestamp)
+    os.makedirs(folder_path, exist_ok=True)
+
+    # Save dictionary to file within the created folder
+    file_path = os.path.join(folder_path, 'trajectories.pkl')
+    with open(file_path, 'wb') as f:
+        pickle.dump(data_dict, f)
+
+
 def ML4CE_uncon_eval(
         N_x_l, 
         f_eval_l,
@@ -93,6 +104,7 @@ def ML4CE_uncon_eval(
         ):
 
     trajectories = {}
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
     #############
     # Dimension #
@@ -113,8 +125,13 @@ def ML4CE_uncon_eval(
             trajectories[dim_S][i_function]['all means'] = {}
             trajectories[dim_S][i_function]['all 95']    = {}
             trajectories[dim_S][i_function]['all 05']    = {}
+            trajectories[dim_S][i_function]['f_list']    = {}
+            trajectories[dim_S][i_function]['x_list']    = {}
             all_f_                                       = []
             randShift_l                                  = np.random.uniform(-3,3, (reps,N_x_))
+
+            # save random shift
+            trajectories[dim_S][i_function]['rand_shift'] = randShift_l
             
             ##############
             # Algorithms #
@@ -124,6 +141,8 @@ def ML4CE_uncon_eval(
             for i_algorithm in algorithms_test:
                 print('== ',str(i_algorithm.__name__))
                 trajectories[dim_S][i_function][str(i_algorithm.__name__)] = []
+                trajectories[dim_S][i_function]['f_list'][str(i_algorithm.__name__)] = []
+                trajectories[dim_S][i_function]['x_list'][str(i_algorithm.__name__)] = []
                 
                 ###############
                 # Repetitions #
@@ -132,15 +151,19 @@ def ML4CE_uncon_eval(
                     # random shift
                     x_shift_ = randShift_l[i_rep,:].reshape((N_x_,1))
                     # test function
-                    t_       = Test_function(i_function, N_x_, False, x_shift_, bounds_)
+                    t_       = Test_function(i_function, N_x_, True, x_shift_, bounds_)
                     # algorithm
                     # a, b, team_names, cids = i_algorithm(t_.fun_test, N_x_, bounds_, f_eval_)
                     a, b, team_names, cids = i_algorithm(t_, N_x_, bounds_, f_eval_)
                     # post-processing
                     t_.best_f_list()                    # List of best points so far
-                    t_.pad_or_truncate(f_eval_)
+                    t_.pad_or_truncate(f_eval_)         
                     # store result
                     trajectories[dim_S][i_function][str(i_algorithm.__name__)].append(copy.deepcopy(t_.best_f_c))
+                    trajectories[dim_S][i_function]['f_list'][str(i_algorithm.__name__)].append(copy.deepcopy(t_.f_list))
+                    trajectories[dim_S][i_function]['x_list'][str(i_algorithm.__name__)].append(copy.deepcopy(t_.x_list))
+                    # safe data in an overwriting fashion
+                    if SafeData == True: save_dict(home_dir, trajectories, timestamp)
                 # statistics from each algorithm for a function    
                 l_   = np.array(trajectories[dim_S][i_function][str(i_algorithm.__name__)])
                 m_   = np.mean(l_, axis=0)
@@ -152,6 +175,8 @@ def ML4CE_uncon_eval(
                 # all_f_.append(copy.deepcopy(m_)) # old
                 all_f_.append(copy.deepcopy(l_))
                 info.append({'alg_name': str(i_algorithm.__name__), 'team names': team_names, 'CIDs': cids})
+                # safe data in an overwriting fashion
+                if SafeData == True: save_dict(home_dir, trajectories, timestamp)
             # statistics for all algorithms for a function       
             # trajectories[dim_S][i_function]['mean']   = np.mean(all_f_, axis=0)     # old
             # trajectories[dim_S][i_function]['median'] = np.median(all_f_, axis=0)   # old
@@ -161,30 +186,21 @@ def ML4CE_uncon_eval(
             trajectories[dim_S][i_function]['median'] = np.median(all_f_, axis=(0,1))
             trajectories[dim_S][i_function]['q 0']    = np.max(all_f_, axis=(0,1))
             trajectories[dim_S][i_function]['q 100']  = np.min(all_f_, axis=(0,1))
+            # safe data in an overwriting fashion
+            if SafeData == True: save_dict(home_dir, trajectories, timestamp)
 
+    # over-write one last time
     if SafeData == True:
         
-        def save_dict_with_timestamp(target_folder, data_dict):
-            # Create a folder with current date and time
-            timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-            folder_path = os.path.join(target_folder, timestamp)
-            os.makedirs(folder_path, exist_ok=True)
-
-            # Save dictionary to file within the created folder
-            file_path = os.path.join(folder_path, 'trajectories.pkl')
-            with open(file_path, 'wb') as f:
-                pickle.dump(data_dict, f)
-
-            return timestamp
-        
-        timestamp = save_dict_with_timestamp(home_dir, trajectories)
-
+        save_dict(home_dir, trajectories, timestamp)
 
         return info, trajectories, timestamp
     
     else:
 
         return info, trajectories, None
+    
+    
                 
 
 def ML4CE_uncon_table(
