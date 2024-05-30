@@ -57,7 +57,8 @@ def opt_SnobFit(f, x_dim, bounds, iter_tot, has_x0 = False):
 
     else:
 
-        n_rs = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point
+        # n_rs = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point
+        n_rs = int(max(x_dim+1,iter_tot*.05))
 
         # evaluate first point
         f_best, x_best = Random_search(f, x_dim, bounds, n_rs)
