@@ -364,6 +364,9 @@ class Test_function:
     def pad_or_truncate(self, n_p):
         '''
         n_p: number of desired elements on list
+        if the list is to long it truncates, if for some 
+        reason the algorithm returns less than the maximum budget (which is possible) 
+        it simply 'padds' with the best element known
         -------
         Truncate or pad list 
         '''
@@ -371,6 +374,7 @@ class Test_function:
         b_last = copy.deepcopy(self.best_f[:n_p])[-1]
         l_last = copy.deepcopy(self.f_list[:n_p])[-1]   
 
+        # pad or truncate
         self.best_f_c = copy.deepcopy(self.best_f[:n_p]) + [b_last]*(n_p - len(self.best_f[:n_p]))
         self.f_list_c = copy.deepcopy(self.f_list[:n_p]) + [l_last]*(n_p - len(self.f_list[:n_p]))
 
