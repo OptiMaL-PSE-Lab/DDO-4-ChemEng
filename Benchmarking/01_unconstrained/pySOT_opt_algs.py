@@ -119,11 +119,11 @@ def opt_DYCORS(f, x_dim, bounds, iter_tot, has_x0=False):
 
     else:
 
-        n_rs = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point
+        # n_rs = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point
 
-        # evaluate first point
-        f_best, x_best = Random_searchDYCORS(f, x_dim, bounds, n_rs)
-        iter_          = iter_tot - n_rs
+        # # evaluate first point
+        # f_best, x_best = Random_searchDYCORS(f, x_dim, bounds, n_rs)
+        # iter_          = iter_tot - n_rs
 
         # define experimental design
         slhd = SymmetricLatinHypercube(dim=x_dim, num_pts=2*(x_dim+1))
@@ -131,7 +131,7 @@ def opt_DYCORS(f, x_dim, bounds, iter_tot, has_x0=False):
         # optimization
         controller = SerialController(objective=f)
         controller.strategy = DYCORSStrategy(
-            max_evals=iter_, 
+            max_evals=iter_tot, 
             opt_prob=f, 
             asynchronous=False, 
             exp_design=slhd, 
@@ -193,11 +193,11 @@ def opt_SRBF(f, x_dim, bounds, iter_tot, has_x0 = False):
         return result, None, None, None
 
     else:
-        n_rs = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point
+        # n_rs = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point
 
-        # evaluate first point
-        f_best, x_best = Random_searchDYCORS(f, x_dim, bounds, n_rs)
-        iter_          = iter_tot - n_rs
+        # # evaluate first point
+        # f_best, x_best = Random_searchDYCORS(f, x_dim, bounds, n_rs)
+        # iter_          = iter_tot - n_rs
         
         # define surrogate
         rbf = RBFInterpolant(
@@ -210,7 +210,7 @@ def opt_SRBF(f, x_dim, bounds, iter_tot, has_x0 = False):
         # optimization
         controller = SerialController(objective=f)
         controller.strategy = SRBFStrategy(
-            max_evals=iter_, opt_prob=f, asynchronous=False, 
+            max_evals=iter_tot, opt_prob=f, asynchronous=False, 
             exp_design=slhd, surrogate=rbf, num_cand=100*x_dim,
             batch_size=1)
 
@@ -269,11 +269,11 @@ def opt_SOP(f, x_dim, bounds, iter_tot, has_x0 = False):
 
     
     else:
-        n_rs = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point
+        # n_rs = int(min(100,max(iter_tot*.05,5)))       # iterations to find good starting point
 
-        # evaluate first point
-        f_best, x_best = Random_searchDYCORS(f, x_dim, bounds, n_rs)
-        iter_          = iter_tot - n_rs
+        # # evaluate first point
+        # f_best, x_best = Random_searchDYCORS(f, x_dim, bounds, n_rs)
+        # iter_          = iter_tot - n_rs
         
         # DYCORS
         # define surrogate
@@ -287,7 +287,7 @@ def opt_SOP(f, x_dim, bounds, iter_tot, has_x0 = False):
         # optimization
         controller = SerialController(objective=f)
         controller.strategy = SOPStrategy(
-            max_evals=iter_, opt_prob=f, asynchronous=False, 
+            max_evals=iter_tot, opt_prob=f, asynchronous=False, 
             exp_design=slhd, surrogate=rbf, num_cand=100*x_dim,
             batch_size=1)
 

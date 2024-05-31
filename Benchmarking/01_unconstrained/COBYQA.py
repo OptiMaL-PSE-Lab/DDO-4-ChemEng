@@ -63,7 +63,8 @@ def COBYQA(
     
     else:
 
-        n_rs = int(min(100,max(f_eval_*.05,5)))       # iterations to find good starting point
+        # n_rs = int(min(100,max(f_eval_*.05,5)))       # iterations to find good starting point
+        n_rs = int(max(x_dim+1,f_eval_*.05))
         iter_          = f_eval_ - n_rs
         # evaluate first point
         f_best, x_best = Random_search(f, x_dim, bounds, n_rs)

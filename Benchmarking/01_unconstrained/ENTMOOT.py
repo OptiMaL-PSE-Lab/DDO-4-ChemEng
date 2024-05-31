@@ -51,19 +51,20 @@ def opt_ENTMOOT(t_, N_x_, bounds_, f_eval_, has_x0 = False):
         # specify goal
         problem_config.add_min_objective()
 
-        # specify initial no. of samples
-        N_init_samples = 10
+        # define no of initial iterations
+        n_rs = int(max(N_x_+1,f_eval_*.05))
+        iter_ = f_eval_ - n_rs
 
         # generate initial samples
-        train_y,train_x = Random_searchENT(t_.fun_test, n_p=N_x_, bounds_rs=bounds_, iter_rs=N_init_samples)
+        train_y,train_x = Random_searchENT(t_.fun_test, n_p=N_x_, bounds_rs=bounds_, iter_rs=n_rs)
 
         # get training-dataset in the form required for the fit method of enting
         # x is a list of tuples, which represent one datapoint each. A 2D-problem has 2 entries per tuple
         # y is a numpy array of shape (n_points, 1)
-
         train_y_cust = train_y.reshape((len(train_y),1))
         train_x_cust = list(zip(*train_x))
 
+        # set hyperparameters
         params = {"unc_params": {"dist_metric": "l1", "acq_sense": "exploration", "beta": 1.5}}
         enting = Enting(problem_config, params=params)
         params_gurobi = {"MIPGap": 0, "OutputFlag": 0}
@@ -71,9 +72,10 @@ def opt_ENTMOOT(t_, N_x_, bounds_, f_eval_, has_x0 = False):
 
         # Remember the proposals and outcomes in these variables
         opt_trajectory_inputs = []
-        opt_trajectory_outputs = np.empty((f_eval_, 1))
+        opt_trajectory_outputs = np.empty((iter_, 1))
 
-        for idx in range(f_eval_):
+        # optimization loop
+        for idx in range(iter_):
             # Put together the initial dataset and any optimization iterations we have done so far
             x = [_ for _ in chain(train_x_cust, opt_trajectory_inputs)]
             y = np.concatenate(
@@ -89,7 +91,7 @@ def opt_ENTMOOT(t_, N_x_, bounds_, f_eval_, has_x0 = False):
             # in order for t_.fun_test to evaluate the optimal point, it has to be transformed from a list of length n_x 
             # to a numpy array of shape (2,1)
 
-            print(t_.fun_test(x_opt_eval))
+            # print(t_.fun_test(x_opt_eval))
 
             opt_trajectory_outputs[idx, 0] = t_.fun_test(x_opt_eval)
             # opt_trajectory_outputs[idx, 0] = blackbox_ground_truth(opt_trajectory_inputs)[-1,0]
