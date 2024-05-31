@@ -90,9 +90,6 @@ def opt_ENTMOOT(t_, N_x_, bounds_, f_eval_, has_x0 = False):
 
             # in order for t_.fun_test to evaluate the optimal point, it has to be transformed from a list of length n_x 
             # to a numpy array of shape (2,1)
-
-            # print(t_.fun_test(x_opt_eval))
-
             opt_trajectory_outputs[idx, 0] = t_.fun_test(x_opt_eval)
             # opt_trajectory_outputs[idx, 0] = blackbox_ground_truth(opt_trajectory_inputs)[-1,0]
 
