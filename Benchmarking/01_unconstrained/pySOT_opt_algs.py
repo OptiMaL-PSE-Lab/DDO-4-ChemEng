@@ -19,27 +19,30 @@ from pySOT.optimization_problems import Ackley, Levy
 from pySOT.utils import progress_plot
 from poap.controller import ThreadController, SerialController, BasicWorkerThread
 import numpy as np
+# from pySOT.experimental_design import ExperimentalDesign, _expdes_dist
 
 
 
-#########################
-# --- Random search --- #
-#########################
+# #########################
+# # --- Random search --- #
+# #########################
 
-# class Exp_dsgn_custom:
+# class RandomSearch(ExperimentalDesign):
+#     """
+#     """
 
-#     def generate_points(lb, ub, int_var):
+#     def __init__(self, dim, num_pts):
+#         self.dim = dim
+#         self.num_pts = num_pts
 
-#     '''
-#     this algorithm creates a list of initial points based on a latin hypercube. The idea for the plotting ist
-#     that I generate a starting point which is taken from the function and then find out, how many more points are generated
-#     by the algorithm (here it does latin hypercube sampling) and then it probably selects the best point out of these to start the 
-#     optimization. So in order for the plotting function I have to make sure, that a) the point from the test-function
-#     is somehow inserted in this list of initial points, and secondly, that the lines connecting the points in the plot all start from 
-#     this starting point.
+#     def generate_points(self, lb=None, ub=None, int_var=None):
+#         """
+#         """
+#         if int_var is None or len(int_var) == 0:
+#             int_var = np.array([])
 
-#     ''' 
-
+#         return int_var
+    
 
 # (f, N_x: int, bounds: array[array[float]], N: int = 100) -> array(N_X), float 
 def Random_searchDYCORS(f, n_p, bounds_rs, iter_rs):
@@ -113,7 +116,6 @@ def opt_DYCORS(f, x_dim, bounds, iter_tot, has_x0=False):
             batch_size=1)
 
         result = controller.run()
-        print(result)
 
         return result, None, None, None
 
@@ -124,9 +126,10 @@ def opt_DYCORS(f, x_dim, bounds, iter_tot, has_x0=False):
         # # evaluate first point
         # f_best, x_best = Random_searchDYCORS(f, x_dim, bounds, n_rs)
         # iter_          = iter_tot - n_rs
-
+        n_rs = int(max(x_dim+1,iter_tot*.05))
         # define experimental design
-        slhd = SymmetricLatinHypercube(dim=x_dim, num_pts=2*(x_dim+1))
+        slhd = SymmetricLatinHypercube(dim=x_dim, num_pts=2*(x_dim+1)) # old
+        # slhd = SymmetricLatinHypercube(dim=x_dim, num_pts=n_rs)
 
         # optimization
         controller = SerialController(objective=f)
@@ -140,7 +143,6 @@ def opt_DYCORS(f, x_dim, bounds, iter_tot, has_x0=False):
             batch_size=1)
 
         result = controller.run()
-        print(result)
 
         return result, None, None, None
 
@@ -188,7 +190,6 @@ def opt_SRBF(f, x_dim, bounds, iter_tot, has_x0 = False):
             )
 
         result = controller.run()
-        #print(result)
 
         return result, None, None, None
 
@@ -205,7 +206,10 @@ def opt_SRBF(f, x_dim, bounds, iter_tot, has_x0 = False):
             tail=LinearTail(x_dim))
         
         # define experimental design
+        n_rs = int(max(x_dim+1,iter_tot*.05))
+
         slhd = SymmetricLatinHypercube(dim=x_dim, num_pts=2*(x_dim+1))
+        # slhd = SymmetricLatinHypercube(dim=x_dim, num_pts=n_rs)
 
         # optimization
         controller = SerialController(objective=f)
@@ -215,7 +219,6 @@ def opt_SRBF(f, x_dim, bounds, iter_tot, has_x0 = False):
             batch_size=1)
 
         result = controller.run()
-        #print(result)
 
         return result, None, None, None
 
@@ -263,7 +266,6 @@ def opt_SOP(f, x_dim, bounds, iter_tot, has_x0 = False):
             )
 
         result = controller.run()
-        #print(result)
 
         return result, None, None, None
 
@@ -282,7 +284,9 @@ def opt_SOP(f, x_dim, bounds, iter_tot, has_x0 = False):
             tail=LinearTail(x_dim))
         
         # define experimental design
+        n_rs = int(max(x_dim+1,iter_tot*.05))
         slhd = SymmetricLatinHypercube(dim=x_dim, num_pts=2*(x_dim+1))
+        # slhd = SymmetricLatinHypercube(dim=x_dim, num_pts=n_rs)
 
         # optimization
         controller = SerialController(objective=f)
