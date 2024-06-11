@@ -38,9 +38,14 @@ def opt_ENTMOOT(t_, N_x_, bounds_, f_eval_, has_x0 = False):
         print('For later if it is decided to keep the algorithm')
 
     else:
+        
+        # sd = np.random.randint(1000, 6000)
 
         # define problem
         problem_config = ProblemConfig(rnd_seed=1234)
+        # problem_config = ProblemConfig(rnd_seed=4567)
+        # problem_config = ProblemConfig(rnd_seed=sd)
+
 
         # specify dimensions and ranges
         for d_ in range(N_x_):
