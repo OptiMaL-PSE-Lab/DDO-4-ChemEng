@@ -233,7 +233,7 @@ def ML4CE_uncon_table(
         dim_S           = 'D'+str(N_x_l[i_dim])
         alg_perf[dim_S] = {}
         for i_alg in algs_test:
-            print('==  ',str(i_alg.__name__),' ==')
+            # print('==  ',str(i_alg.__name__),' ==')
             alg_perf[dim_S][str(i_alg.__name__)] = {}
             # for every function
             for i_fun in range(n_f):      
@@ -597,10 +597,14 @@ def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, time
             plt.figure(figsize=(15, 15))
             for i_alg in algs_test:
                 trial_ = test_res[dim_S][funcs_test[i_fun]]['all means'][str(i_alg.__name__)]
+                up_     = test_res[dim_S][funcs_test[i_fun]]['all 95'][str(i_alg.__name__)]
+                down_   = test_res[dim_S][funcs_test[i_fun]]['all 05'][str(i_alg.__name__)]
                 alg_index = alg_indices[i_alg]  # Get the index of the algorithm
                 color = colors[alg_index]
                 line_style = line_styles[alg_index % len(line_styles)]  # Use modulo to cycle through line styles
                 plt.plot(trial_, color=color, linestyle=line_style, lw=3, label=str(i_alg.__name__))
+                x_ax = np.linspace(0, len(down_), len(down_), endpoint=True)
+                plt.gca().fill_between(x_ax,down_, up_, color=color, alpha=0.2)
             plt.ylabel('obj value', fontsize = '28', fontname='Times New Roman')
             plt.xlabel('iterations', fontsize = '28', fontname='Times New Roman')
             # plt.yscale('log')
