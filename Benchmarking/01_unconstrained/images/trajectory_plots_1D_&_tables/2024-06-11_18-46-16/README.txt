@@ -1,0 +1,2 @@
+This file was created when I changed the intervalls to 10 and 90 and I needed for the algorithms to be re-evaluated. The content 
+(except for the 10 and 90 percentiles) should be the same as for the files from 2024-06-10_17-49-09
