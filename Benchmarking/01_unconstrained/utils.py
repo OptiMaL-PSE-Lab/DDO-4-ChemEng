@@ -123,8 +123,8 @@ def ML4CE_uncon_eval(
             print('===================== ',i_function,'D'+str(N_x_))
             trajectories[dim_S][i_function]              = {}
             trajectories[dim_S][i_function]['all means'] = {}
-            trajectories[dim_S][i_function]['all 95']    = {}
-            trajectories[dim_S][i_function]['all 05']    = {}
+            trajectories[dim_S][i_function]['all 90']    = {}
+            trajectories[dim_S][i_function]['all 10']    = {}
             trajectories[dim_S][i_function]['f_list']    = {}
             trajectories[dim_S][i_function]['x_list']    = {}
             all_f_                                       = []
@@ -167,11 +167,11 @@ def ML4CE_uncon_eval(
                 # statistics from each algorithm for a function    
                 l_   = np.array(trajectories[dim_S][i_function][str(i_algorithm.__name__)])
                 m_   = np.mean(l_, axis=0)
-                q05_ = np.quantile(l_, 0.05, axis=0)
-                q95_ = np.quantile(l_, 0.95, axis=0)
+                q10_ = np.quantile(l_, 0.10, axis=0)
+                q90_ = np.quantile(l_, 0.90, axis=0)
                 trajectories[dim_S][i_function]['all means'][str(i_algorithm.__name__)] = copy.deepcopy(m_)
-                trajectories[dim_S][i_function]['all 95'][str(i_algorithm.__name__)]    = copy.deepcopy(q05_)
-                trajectories[dim_S][i_function]['all 05'][str(i_algorithm.__name__)]    = copy.deepcopy(q95_)
+                trajectories[dim_S][i_function]['all 90'][str(i_algorithm.__name__)]    = copy.deepcopy(q10_)
+                trajectories[dim_S][i_function]['all 10'][str(i_algorithm.__name__)]    = copy.deepcopy(q90_)
                 # all_f_.append(copy.deepcopy(m_)) # old
                 all_f_.append(copy.deepcopy(l_))
                 info.append({'alg_name': str(i_algorithm.__name__), 'team names': team_names, 'CIDs': cids})
@@ -390,6 +390,7 @@ def ML4CE_uncon_contours(
         Zoom = False,
         SafeFig = False,
         ):
+    
     '''
     cons_plot_l -> list of functions for the constraints for plotting
     cons_eval_l -> list of functions for the constraints for evaluation
@@ -416,8 +417,6 @@ def ML4CE_uncon_contours(
 
     # add objective contour
     ax3.contour(X1, X2, y, 50)
-
-    # ax3.set_yscale('log')
 
     if Cons == True: 
 
@@ -565,8 +564,8 @@ def ML4CE_uncon_graph_rel(test_res, algs_test, funcs_test, N_x_l):
             for i_fun in range(n_f):
                 plt.subplot(nrow,2, n_f*i_dim+i_fun+1)
                 trial_  = test_res[dim_S][funcs_test[i_fun]]['all means'][str(i_alg.__name__)]
-                up_     = test_res[dim_S][funcs_test[i_fun]]['all 95'][str(i_alg.__name__)]
-                down_   = test_res[dim_S][funcs_test[i_fun]]['all 05'][str(i_alg.__name__)]
+                up_     = test_res[dim_S][funcs_test[i_fun]]['all 90'][str(i_alg.__name__)]
+                down_   = test_res[dim_S][funcs_test[i_fun]]['all 10'][str(i_alg.__name__)]
                 medall_ = test_res[dim_S][funcs_test[i_fun]]['mean']
                 lowall_ = test_res[dim_S][funcs_test[i_fun]]['q 100']
                 higall_ = test_res[dim_S][funcs_test[i_fun]]['q 0']
@@ -597,14 +596,40 @@ def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, time
             plt.figure(figsize=(15, 15))
             for i_alg in algs_test:
                 trial_ = test_res[dim_S][funcs_test[i_fun]]['all means'][str(i_alg.__name__)]
-                up_     = test_res[dim_S][funcs_test[i_fun]]['all 95'][str(i_alg.__name__)]
-                down_   = test_res[dim_S][funcs_test[i_fun]]['all 05'][str(i_alg.__name__)]
+                up_     = test_res[dim_S][funcs_test[i_fun]]['all 90'][str(i_alg.__name__)]
+                down_   = test_res[dim_S][funcs_test[i_fun]]['all 10'][str(i_alg.__name__)]
                 alg_index = alg_indices[i_alg]  # Get the index of the algorithm
                 color = colors[alg_index]
                 line_style = line_styles[alg_index % len(line_styles)]  # Use modulo to cycle through line styles
                 plt.plot(trial_, color=color, linestyle=line_style, lw=3, label=str(i_alg.__name__))
-                x_ax = np.linspace(0, len(down_), len(down_), endpoint=True)
+                x_ax = np.linspace(0, len(down_), len(down_), endpoint=False)
                 plt.gca().fill_between(x_ax,down_, up_, color=color, alpha=0.2)
+
+                # Calculate the position of the vertical line based on the length of the trajectory
+                length = len(down_)
+                if length == 20:
+                    vline_pos = 5
+                elif length == 50:
+                    vline_pos = 10
+                elif length == 100:
+                    vline_pos = 15
+                else:
+                    vline_pos = None  # Or set a default value if needed
+
+                # Add the vertical line if a valid position is calculated
+                if vline_pos is not None:
+                    plt.axvline(x=vline_pos, color='red', linestyle='--', linewidth=2)
+
+                # Setting x-axis ticks to integer values starting from 0 and showing every 5th tick
+                tick_positions = np.arange(0, len(down_), 5)
+                if (len(down_) - 1) % 5 != 0:  # If the last position is not already included
+                    tick_positions = np.append(tick_positions, len(down_) - 1)
+                tick_labels = np.arange(0, len(down_), 5)
+                if len(tick_labels) < len(tick_positions):
+                    tick_labels = np.append(tick_labels, len(down_) - 1)
+
+                plt.xticks(tick_positions, tick_labels, fontsize=24, fontname='Times New Roman')
+
             plt.ylabel('obj value', fontsize = '28', fontname='Times New Roman')
             plt.xlabel('iterations', fontsize = '28', fontname='Times New Roman')
             # plt.yscale('log')
@@ -629,6 +654,124 @@ def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, time
                     print(f"The directory '{directory_name}' does not exist in the root directory.")
                     os.mkdir(directory_name)
                     plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]))
+
+
+
+def ML4CE_uncon_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_origin, bounds_, bounds_plot, SafeFig = False):
+
+    f_eval_ = 40 # trajectory length (= evaluation budget) --> Keep in mind that BO uses 10 datapoints to build the model when plotting
+    samples_number = 10
+    track_x = True
+
+    for fun_ in functions_test:
+        for alg_ in algorithms_test:
+            t_ = Test_function(fun_, N_x_, track_x, x_shift_origin, bounds_)
+            print(alg_)
+            a, b, team_names, cids = alg_(t_, N_x_, bounds_, f_eval_, has_x0=True)
+            X_opt = np.array(t_.x_list[:f_eval_+1]) # needs to be capped because of COBYLA not respecting the budget
+
+            # evaluate grid with vmap
+            n_points = 100
+            x1lb      = bounds_plot[0][0]; x1ub = bounds_plot[0][1]
+            x1       = np.linspace(start=x1lb,stop=x1ub,num=n_points)
+            x2lb      = bounds_plot[1][0]; x2ub = bounds_plot[1][1]
+            x2       = np.linspace(start=x2lb,stop=x2ub,num=n_points)
+            X1,X2      = np.meshgrid(x1,x2)
+
+            # define plot
+            plt.figure(figsize=(15, 15))
+            ax3 = plt.subplot()
+
+            # Initialize an empty array to store results
+            y = np.empty((n_points, n_points))
+            # Iterate over each element and apply the function
+            for i in range(n_points):
+                for j in range(n_points):
+                    y[i, j] = t_.fun_test(np.array([[X1[i, j], X2[i, j]]]))
+
+            # add objective contour
+            ax3.contour(X1, X2, y, 50)
+
+            # Calculate the length of the array
+            array_length = len(X_opt)
+
+            # Plot
+            for i in range(array_length):
+                # ax3.plot(X_opt[i, 0], X_opt[i, 1], marker='o', color=color_gradient[i])
+                ax3.plot(X_opt[i, 0], X_opt[i, 1], marker='o', color='grey')
+
+            threshold = 2  # Define threshold here
+
+
+            # connect best-so-far
+            best_points = []
+            best_value = float('inf')  # Initialize with a high value
+
+            for point in X_opt:
+                y = obj_func.fun_test(point)
+                if y < best_value:
+                    best_value = y
+                    best_points.append(point)
+
+            best_values_x1 = [point[0] for point in best_points]
+            best_values_x2 = [point[1] for point in best_points]
+
+            ax3.plot(best_values_x1, best_values_x2, marker='o', linestyle='-', color ='black')
+
+
+            if PlotArrows == True: 
+
+                # Extract x and y coordinates
+                x_coords = X_opt[:, 0, 0]
+                y_coords = X_opt[:, 1, 0]
+
+                # Connect the points in order and add arrows
+                for i in range(len(X_opt) - 1):
+                    plt.plot([x_coords[i], x_coords[i+1]], [y_coords[i], y_coords[i+1]], color='blue')
+                    # Calculate distance between consecutive points
+                    distance = np.sqrt((x_coords[i+1] - x_coords[i])**2 + (y_coords[i+1] - y_coords[i])**2)
+                    if distance > threshold:
+                        # Calculate midpoint
+                        midpoint = ((x_coords[i] + x_coords[i+1]) / 2, (y_coords[i] + y_coords[i+1]) / 2)
+                        # Calculate direction
+                        direction = (x_coords[i+1] - x_coords[i], y_coords[i+1] - y_coords[i])
+                        # Normalize direction
+                        direction /= np.linalg.norm(direction)
+                        # Add arrow
+                        plt.arrow(midpoint[0], midpoint[1], direction[0], direction[1], head_width=0.2, head_length=0.2, fc='blue', ec='blue')
+
+            # add trust regions to samples in plot
+            if TR_plot == True:
+                for i in range(X_opt[samples_number:,:].shape[0]):
+                    x_pos = X_opt[samples_number+i,0]
+                    y_pos = X_opt[samples_number+i,1]
+                    # plt.text(x_pos, y_pos, str(i))
+                    circle1 = plt.Circle((x_pos, y_pos), radius=TR_l[i], color='black', fill=False, linestyle='--')
+                    ax3.add_artist(circle1)
+
+            # Add starting point to the trajectory
+            ax3.plot(X_opt[0,0,0], X_opt[0,1,0], marker = 's', color = 'black', markersize=10)
+
+            # add final candidate to plot
+            xnew = xnew.flatten()
+            ax3.plot(xnew[0], xnew[1], marker = '^', color = 'black', markersize=10)
+
+            if Zoom == True:
+
+                # Extract x and y coordinates
+                x_coords = X_opt[:, 0, 0]
+                y_coords = X_opt[:, 1, 0]
+
+                # zoom-in 
+                x1lb_zoom = min(x_coords)-1
+                x1ub_zoom = max(x_coords)+1
+                x2lb_zoom = min(y_coords)-1
+                x2ub_zoom = max(y_coords)+1
+
+                ax3.axis([x1lb_zoom,x1ub_zoom,x2lb_zoom,x2ub_zoom])
+
+            else:
+                ax3.axis([x1lb,x1ub,x2lb,x2ub])
 
 
 
