@@ -586,7 +586,7 @@ def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, time
 
     colors = plt.cm.tab10(np.linspace(0, 1, len(algs_test)))
     line_styles = ['-', '--', '-.', ':']  
-    alg_indices = {alg: i for i, alg in enumerate(algs_test)}  
+    alg_indices = {alg: i for i, alg in enumerate(algs_test)}
 
     n_f = len(funcs_test)
 
@@ -660,55 +660,64 @@ def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, time
 def ML4CE_uncon_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_origin, bounds_, bounds_plot, SafeFig = False):
 
     f_eval_ = 40 # trajectory length (= evaluation budget) --> Keep in mind that BO uses 10 datapoints to build the model when plotting
-    samples_number = 10
     track_x = True
+    colors = plt.cm.tab10(np.linspace(0, 1, len(algorithms_test)))
+    alg_indices = {alg: i for i, alg in enumerate(algorithms_test)}
 
     for fun_ in functions_test:
+
+        t_ = Test_function(fun_, N_x_, track_x, x_shift_origin, bounds_)
+
+        # evaluate grid with vmap
+        n_points = 100
+        x1lb      = bounds_plot[0][0]; x1ub = bounds_plot[0][1]
+        x1       = np.linspace(start=x1lb,stop=x1ub,num=n_points)
+        x2lb      = bounds_plot[1][0]; x2ub = bounds_plot[1][1]
+        x2       = np.linspace(start=x2lb,stop=x2ub,num=n_points)
+        X1,X2      = np.meshgrid(x1,x2)
+
+        # define plot
+        plt.figure(figsize=(15, 15))
+        ax3 = plt.subplot()
+
+        # Initialize an empty array to store results
+        y = np.empty((n_points, n_points))
+
+        # Iterate over each element and apply the function
+        for i in range(n_points):
+            for j in range(n_points):
+                y[i, j] = t_.fun_test(np.array([[X1[i, j], X2[i, j]]]))
+
+        # add objective contour
+        ax3.contour(X1, X2, y, 50)
+
         for alg_ in algorithms_test:
-            t_ = Test_function(fun_, N_x_, track_x, x_shift_origin, bounds_)
+
             print(alg_)
-            a, b, team_names, cids = alg_(t_, N_x_, bounds_, f_eval_, has_x0=True)
-            X_opt = np.array(t_.x_list[:f_eval_+1]) # needs to be capped because of COBYLA not respecting the budget
 
-            # evaluate grid with vmap
-            n_points = 100
-            x1lb      = bounds_plot[0][0]; x1ub = bounds_plot[0][1]
-            x1       = np.linspace(start=x1lb,stop=x1ub,num=n_points)
-            x2lb      = bounds_plot[1][0]; x2ub = bounds_plot[1][1]
-            x2       = np.linspace(start=x2lb,stop=x2ub,num=n_points)
-            X1,X2      = np.meshgrid(x1,x2)
+            # color setting
+            alg_index = alg_indices[alg_]  
+            color = colors[alg_index]
 
-            # define plot
-            plt.figure(figsize=(15, 15))
-            ax3 = plt.subplot()
+            # initiate test function
+            f_ = Test_function(fun_, N_x_, track_x, x_shift_origin, bounds_)
 
-            # Initialize an empty array to store results
-            y = np.empty((n_points, n_points))
-            # Iterate over each element and apply the function
-            for i in range(n_points):
-                for j in range(n_points):
-                    y[i, j] = t_.fun_test(np.array([[X1[i, j], X2[i, j]]]))
+            # perform optimization
+            a, b, team_names, cids = alg_(f_, N_x_, bounds_, f_eval_, has_x0=True)
+            X_opt = np.array(f_.x_list[:f_eval_+1]) # needs to be capped because of COBYLA not respecting the budget
 
-            # add objective contour
-            ax3.contour(X1, X2, y, 50)
+            # We only plot the best-so-far
 
-            # Calculate the length of the array
-            array_length = len(X_opt)
-
-            # Plot
-            for i in range(array_length):
-                # ax3.plot(X_opt[i, 0], X_opt[i, 1], marker='o', color=color_gradient[i])
-                ax3.plot(X_opt[i, 0], X_opt[i, 1], marker='o', color='grey')
-
-            threshold = 2  # Define threshold here
-
+            # # Plot
+            # for i in range(len(X_opt)):
+            #     ax3.plot(X_opt[i, 0], X_opt[i, 1], marker='o', color='grey')
 
             # connect best-so-far
             best_points = []
             best_value = float('inf')  # Initialize with a high value
 
             for point in X_opt:
-                y = obj_func.fun_test(point)
+                y = f_.fun_test(point)
                 if y < best_value:
                     best_value = y
                     best_points.append(point)
@@ -716,62 +725,15 @@ def ML4CE_uncon_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_or
             best_values_x1 = [point[0] for point in best_points]
             best_values_x2 = [point[1] for point in best_points]
 
-            ax3.plot(best_values_x1, best_values_x2, marker='o', linestyle='-', color ='black')
-
-
-            if PlotArrows == True: 
-
-                # Extract x and y coordinates
-                x_coords = X_opt[:, 0, 0]
-                y_coords = X_opt[:, 1, 0]
-
-                # Connect the points in order and add arrows
-                for i in range(len(X_opt) - 1):
-                    plt.plot([x_coords[i], x_coords[i+1]], [y_coords[i], y_coords[i+1]], color='blue')
-                    # Calculate distance between consecutive points
-                    distance = np.sqrt((x_coords[i+1] - x_coords[i])**2 + (y_coords[i+1] - y_coords[i])**2)
-                    if distance > threshold:
-                        # Calculate midpoint
-                        midpoint = ((x_coords[i] + x_coords[i+1]) / 2, (y_coords[i] + y_coords[i+1]) / 2)
-                        # Calculate direction
-                        direction = (x_coords[i+1] - x_coords[i], y_coords[i+1] - y_coords[i])
-                        # Normalize direction
-                        direction /= np.linalg.norm(direction)
-                        # Add arrow
-                        plt.arrow(midpoint[0], midpoint[1], direction[0], direction[1], head_width=0.2, head_length=0.2, fc='blue', ec='blue')
-
-            # add trust regions to samples in plot
-            if TR_plot == True:
-                for i in range(X_opt[samples_number:,:].shape[0]):
-                    x_pos = X_opt[samples_number+i,0]
-                    y_pos = X_opt[samples_number+i,1]
-                    # plt.text(x_pos, y_pos, str(i))
-                    circle1 = plt.Circle((x_pos, y_pos), radius=TR_l[i], color='black', fill=False, linestyle='--')
-                    ax3.add_artist(circle1)
+            ax3.plot(best_values_x1, best_values_x2, marker='o', linestyle='-', color=color)
 
             # Add starting point to the trajectory
             ax3.plot(X_opt[0,0,0], X_opt[0,1,0], marker = 's', color = 'black', markersize=10)
 
-            # add final candidate to plot
-            xnew = xnew.flatten()
-            ax3.plot(xnew[0], xnew[1], marker = '^', color = 'black', markersize=10)
-
-            if Zoom == True:
-
-                # Extract x and y coordinates
-                x_coords = X_opt[:, 0, 0]
-                y_coords = X_opt[:, 1, 0]
-
-                # zoom-in 
-                x1lb_zoom = min(x_coords)-1
-                x1ub_zoom = max(x_coords)+1
-                x2lb_zoom = min(y_coords)-1
-                x2ub_zoom = max(y_coords)+1
-
-                ax3.axis([x1lb_zoom,x1ub_zoom,x2lb_zoom,x2ub_zoom])
-
-            else:
-                ax3.axis([x1lb,x1ub,x2lb,x2ub])
+            # # add final candidate to plot
+            # xnew = xnew.flatten()
+            # ax3.plot(xnew[0], xnew[1], marker = '^', color = 'black', markersize=10)
+            ax3.axis([x1lb,x1ub,x2lb,x2ub])
 
 
 
