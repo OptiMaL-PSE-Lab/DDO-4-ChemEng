@@ -657,24 +657,27 @@ def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, time
 
 
 
-def ML4CE_uncon_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_origin, bounds_, bounds_plot, SafeFig = False):
+import numpy as np
+import matplotlib.pyplot as plt
 
-    f_eval_ = 40 # trajectory length (= evaluation budget) --> Keep in mind that BO uses 10 datapoints to build the model when plotting
+def ML4CE_uncon_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_origin, bounds_, bounds_plot, SafeFig=False):
+    f_eval_ = 40  # trajectory length (= evaluation budget) --> Keep in mind that BO uses 10 datapoints to build the model when plotting
     track_x = True
     colors = plt.cm.tab10(np.linspace(0, 1, len(algorithms_test)))
     alg_indices = {alg: i for i, alg in enumerate(algorithms_test)}
 
     for fun_ in functions_test:
-
         t_ = Test_function(fun_, N_x_, track_x, x_shift_origin, bounds_)
 
         # evaluate grid with vmap
         n_points = 100
-        x1lb      = bounds_plot[0][0]; x1ub = bounds_plot[0][1]
-        x1       = np.linspace(start=x1lb,stop=x1ub,num=n_points)
-        x2lb      = bounds_plot[1][0]; x2ub = bounds_plot[1][1]
-        x2       = np.linspace(start=x2lb,stop=x2ub,num=n_points)
-        X1,X2      = np.meshgrid(x1,x2)
+        x1lb = bounds_plot[0][0]
+        x1ub = bounds_plot[0][1]
+        x1 = np.linspace(start=x1lb, stop=x1ub, num=n_points)
+        x2lb = bounds_plot[1][0]
+        x2ub = bounds_plot[1][1]
+        x2 = np.linspace(start=x2lb, stop=x2ub, num=n_points)
+        X1, X2 = np.meshgrid(x1, x2)
 
         # define plot
         plt.figure(figsize=(15, 15))
@@ -692,11 +695,10 @@ def ML4CE_uncon_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_or
         ax3.contour(X1, X2, y, 50)
 
         for alg_ in algorithms_test:
-
             print(alg_)
 
             # color setting
-            alg_index = alg_indices[alg_]  
+            alg_index = alg_indices[alg_]
             color = colors[alg_index]
 
             # initiate test function
@@ -704,13 +706,7 @@ def ML4CE_uncon_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_or
 
             # perform optimization
             a, b, team_names, cids = alg_(f_, N_x_, bounds_, f_eval_, has_x0=True)
-            X_opt = np.array(f_.x_list[:f_eval_+1]) # needs to be capped because of COBYLA not respecting the budget
-
-            # We only plot the best-so-far
-
-            # # Plot
-            # for i in range(len(X_opt)):
-            #     ax3.plot(X_opt[i, 0], X_opt[i, 1], marker='o', color='grey')
+            X_opt = np.array(f_.x_list[:f_eval_+1])  # needs to be capped because of COBYLA not respecting the budget
 
             # connect best-so-far
             best_points = []
@@ -725,15 +721,40 @@ def ML4CE_uncon_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_or
             best_values_x1 = [point[0] for point in best_points]
             best_values_x2 = [point[1] for point in best_points]
 
-            ax3.plot(best_values_x1, best_values_x2, marker='o', linestyle='-', color=color)
+            ax3.plot(best_values_x1, best_values_x2, marker='o', linestyle='-', color=color, label=alg_.__name__)
 
             # Add starting point to the trajectory
-            ax3.plot(X_opt[0,0,0], X_opt[0,1,0], marker = 's', color = 'black', markersize=10)
+            ax3.plot(X_opt[0,0,0], X_opt[0,1,0], marker='s', color='black', markersize=10)
 
-            # # add final candidate to plot
-            # xnew = xnew.flatten()
-            # ax3.plot(xnew[0], xnew[1], marker = '^', color = 'black', markersize=10)
-            ax3.axis([x1lb,x1ub,x2lb,x2ub])
+            ax3.axis([x1lb, x1ub, x2lb, x2ub])
+            plt.ylabel('X2', fontsize='28', fontname='Times New Roman')
+            plt.xlabel('X1', fontsize='28', fontname='Times New Roman')
+            plt.tick_params(axis='x', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of x ticks
+            plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
+
+        # Add legend
+        plt.legend(fontsize=24)
+
+        if SafeFig == True:
+
+            def directory_exists(directory_name):
+                root_directory = os.getcwd()  # Root directory on Unix-like systems
+                directory_path = os.path.join(root_directory, directory_name)
+                return os.path.isdir(directory_path)
+
+            directory_name = 'images/trajectory_plots_2D'
+            if directory_exists(directory_name):
+
+                plt.savefig(directory_name + '/{}_allin1.png'.format(f_.func_type))
+            else:
+                print(f"The directory '{directory_name}' does not exist in the root directory.")
+
+            plt.close
+
+        else:
+            plt.show()
+
+
 
 
 
