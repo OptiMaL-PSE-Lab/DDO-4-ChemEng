@@ -153,7 +153,6 @@ def ML4CE_uncon_eval(
                     # test function
                     t_       = Test_function(i_function, N_x_, True, x_shift_, bounds_)
                     # algorithm
-                    # a, b, team_names, cids = i_algorithm(t_.fun_test, N_x_, bounds_, f_eval_)
                     a, b, team_names, cids = i_algorithm(t_, N_x_, bounds_, f_eval_)
                     # post-processing
                     t_.best_f_list()                    # List of best points so far
@@ -172,7 +171,6 @@ def ML4CE_uncon_eval(
                 trajectories[dim_S][i_function]['all means'][str(i_algorithm.__name__)] = copy.deepcopy(m_)
                 trajectories[dim_S][i_function]['all 90'][str(i_algorithm.__name__)]    = copy.deepcopy(q10_)
                 trajectories[dim_S][i_function]['all 10'][str(i_algorithm.__name__)]    = copy.deepcopy(q90_)
-                # all_f_.append(copy.deepcopy(m_)) # old
                 all_f_.append(copy.deepcopy(l_))
                 info.append({'alg_name': str(i_algorithm.__name__), 'team names': team_names, 'CIDs': cids})
                 # safe data in an overwriting fashion
@@ -233,7 +231,7 @@ def ML4CE_uncon_table(
         dim_S           = 'D'+str(N_x_l[i_dim])
         alg_perf[dim_S] = {}
         for i_alg in algs_test:
-            # print('==  ',str(i_alg.__name__),' ==')
+            print('==  ',str(i_alg.__name__),' ==')
             alg_perf[dim_S][str(i_alg.__name__)] = {}
             # for every function
             for i_fun in range(n_f):      
