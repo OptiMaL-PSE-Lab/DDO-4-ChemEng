@@ -34,7 +34,6 @@ def closest_point_on_constraint(x_vio, con):
     return closest_point
 
 
-
 class Test_function:
 
     '''
@@ -300,9 +299,11 @@ class Test_function:
             x1 + 1.27 - 2.83x2 + 0.69x2**2 <= 0
             '''
 
-            g1 = x[0] + 1.27 - 2.83*x[1] + 0.69*x[1]**2
+            g1 = x[0] + 1.27 - 2.83*x[1] + 0.69*x[1]**2 
 
-            if g1 > vio:
+
+            # if g1 > vio:
+            if isinstance(g1, float) and g1 > vio:
                 # print('g1 violated')
 
                 def g_func(x):
@@ -338,7 +339,7 @@ class Test_function:
             g1 = 1.5*x[0] + 0.6 - x[1]
 
 
-            if g1 > vio:
+            if isinstance(g1, float) and g1 > vio:
                 # print('g1 violated')
 
                 def g_func(x):
@@ -371,7 +372,7 @@ class Test_function:
             
             g1 = 6.31225*x[0]+3.60257 - x[1]
 
-            if g1 > vio:
+            if isinstance(g1, float) and g1 > vio:
                 # print('g1 violated')
 
                 def g_func(x):
