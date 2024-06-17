@@ -283,7 +283,7 @@ def ML4CE_con_table(
                     mean_vio = 0 
 
                 vio_dict[dim_S][str(i_alg.__name__)][funcs_test[i_fun]]['vio_g']['mean_vio'] = mean_vio
-                
+                    
                 # mean no of constrain satisfaction
                 vio_dict[dim_S][str(i_alg.__name__)][funcs_test[i_fun]]['vio_g']['perc_nonvio']=(vio_list.count(None) / len(vio_list)) * 100
 
