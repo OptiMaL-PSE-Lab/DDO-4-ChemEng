@@ -8,6 +8,7 @@ Created on Sat Aug 19 18:00:56 2023
 import numpy as np
 import copy
 from scipy.optimize import minimize_scalar
+from WO import *
 
 ##########################################
 ### threshold for constraint violation ###
@@ -201,7 +202,27 @@ class Test_function:
                 ],
                 ])
 
+        if self.func_type == 'WO_f':
+
+            self.x0 = np.array(
+                ([[6.9], [83]],
+                ))
             
+            self.init_points = np.array([[
+                [6.9 + 0.1863, 83.8345781614272596],
+                [7.033735443252803, 83.9070889874067998],
+                [6.9 + .2554621696650266, 83.839167539044557],
+                [6.9 - .6991499017924774, 83.067343702881785],
+                [6.9 + .2204588351029315, 83.9322351439533074],
+                [6.9 - .8665994738407723, 83.294931903565754],
+                [6.9 - .5352717073354922, 83.93764772917438],
+                [6.9 + .388286226588492, 83.971974085341454],
+                [6.9 - .8820488343028465, 83.3689041148478545],
+                [6.9 + .2178130348809955, 83.603861244697474],
+                ],
+                ])
+            
+    
     ################    
     # run function #
     ################
@@ -280,6 +301,27 @@ class Test_function:
                 
             # return objective        
             return z
+        
+        #################
+        # WO case-stuy ##
+        #################
+
+        if self.func_type == 'WO_f':
+
+            # here we need the objective function now
+            WO_instance = WO_system()
+            z = WO_instance.WO_obj_sys_ca_noise_less(x)
+
+            # track f 
+            self.f_list.append(z) 
+            if self.track_x:
+                self.x_list.append(x) 
+                
+            # return objective        
+            return z
+        
+
+
         
 
     ##################  
@@ -392,6 +434,75 @@ class Test_function:
 
             return -g1
         
+
+        ################################
+        ## Constraints Williams Otto ###
+        ################################
+
+
+        if self.func_type == 'WO_f':
+
+            WO_instance = WO_system()
+
+            g1 = WO_instance.WO_con1_sys_ca_noise_less(x)
+            g2 = WO_instance.WO_con2_sys_ca_noise_less(x)
+
+            if isinstance(g1, float) and g1 > vio:
+
+                # track g 
+                self.g_list.append(g1)
+
+            else:
+                self.g_list.append(None)
+
+            if isinstance(g2, float) and g2 > vio:
+
+                # track g 
+                self.g_list.append(g2)
+
+            else:
+                self.g_list.append(None)
+
+            return [-g1, -g2]
+
+
+    
+
+    ########################
+    # FOR BO-related algorithms ##
+    # run constraint for WO#
+    #######################
+
+    def WO_con1_test(self,x):
+        WO_instance_con1 = WO_system()
+        con1_val = WO_instance_con1.WO_con1_sys_ca_noise_less(x)
+
+        if isinstance(con1_val, float) and con1_val > vio:
+
+            # track g 
+            self.g_list.append(con1_val)
+
+        else:
+            self.g_list.append(None)
+
+        return -con1_val
+
+    def WO_con2_test(self,x):
+        WO_instance_con2 = WO_system()
+        
+        con2_val = WO_instance_con2.WO_con2_sys_ca_noise_less(x)
+    
+        if isinstance(con2_val, float) and con2_val > vio:
+
+            # track g 
+            self.g_list.append(con2_val)
+
+        else:
+            self.g_list.append(None)
+
+        return -con2_val
+    
+    
     ###################  
     # plot constraint #
     ###################
@@ -438,7 +549,22 @@ class Test_function:
             x1 = x
             return 6.31225*x1+3.60257
 
-        
+    def WO_con1_plot(self,x):
+
+        '''
+        6.92x1+49.815-x2<=0
+        '''
+        x1 = x
+        return 6.55*x1+51.9
+
+    def WO_con2_plot(self,x):
+
+        '''
+        -1.09052x1^2+4.32428x1+84.1511 - x2 <= 0
+        1.14707 x^2-18.2376 x+138.597 - x2 <= 0
+        '''
+        x1 = x
+        return 1.14707*x1**2-18.2376*x1+138.537
     ####################    
     # re-arrange lists #
     ####################
