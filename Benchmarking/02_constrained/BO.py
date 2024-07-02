@@ -227,7 +227,7 @@ class BO:
         self.multi_opt, self.multi_hyper              = multi_opt, multi_hyper
         self.store_data, self.data, self.bounds       = store_data, data, bounds
         self.x0, self.obj_system                      = x0, obj_system
-        self.cons_system                              = [cons_system]
+        self.cons_system                              = cons_system
         self.TR_scaling                               = TR_scaling
         # TR adjustment variables
         self.Delta_max, self.eta0, self.eta1          = Delta_max, eta0, eta1
@@ -235,9 +235,10 @@ class BO:
         self.safe_con, self.safe_TR, self.TR_method   = safe_con, safe_TR, TR_method
         # tracking non-accepted samples
         self.violation_list, self.suboptimal_list     = [],[]
-
+        
         # other definitions
-        self.ng     = 1 #TODO automatize
+        self.ng     = len(self.cons_system)
+        # self.ng     = 1 #TODO automatize
         self.Delta0 = Delta0
         # data creating
         self.Xtrain, self.ytrain               = self.data_handling()
@@ -293,7 +294,7 @@ class BO:
             ndata         = data[2]
             Xtrain        = np.zeros((ndata, ndim))
             ytrain        = np.zeros((ng+1, ndata))
-            funcs_system  = [obj_system]+ cons_system
+            funcs_system  = [obj_system] + cons_system
 
             for ii in range(ng+1):
                 # computing data
@@ -314,15 +315,22 @@ class BO:
             ndim          = Xtrain.shape[1]
             ndata         = Xtrain.shape[0]
             ytrain        = np.zeros((ng+1, ndata))
-            funcs_system  = [obj_system]+ cons_system
+            print(ytrain)
+            funcs_system  = [obj_system] + cons_system
+
+            print(funcs_system)
 
             for ii in range(ng+1):
                 fx     = np.zeros(ndata)
 
                 for i in range(ndata):
                     fx[i] = funcs_system[ii](np.array(Xtrain[i,:]))
+
+
                 # not meant for multi-output
+
                 ytrain[ii,:] = fx
+                print(ytrain)
 
         Xtrain = np.array(Xtrain)
         ytrain = np.array(ytrain)
@@ -634,7 +642,10 @@ def CBO_opt(
     '''
 # comment 1233
     test_fun = f.fun_test
-    test_con = f.con_test
+
+    if f.func_type == 'WO_f': test_con = [f.WO_con1_test, f.WO_con2_test]
+    else: test_con = [f.con_test]
+
     Xtrain = f.init_points[i_rep]
     x0 = f.x0[i_rep].flatten()
     samples_number = Xtrain.shape[0]
@@ -699,7 +710,10 @@ def CBO_TR_opt(
     '''
 # comment 1233
     test_fun = f.fun_test
-    test_con = f.con_test
+
+    if f.func_type == 'WO_f': test_con = [f.WO_con1_test, f.WO_con2_test]
+    else: test_con = [f.con_test]
+
     Xtrain = f.init_points[i_rep]
     x0 = f.x0[i_rep].flatten()
     samples_number = Xtrain.shape[0]

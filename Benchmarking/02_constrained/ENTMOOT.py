@@ -35,7 +35,7 @@ def opt_ENTMOOT(
         N_x_, 
         bounds_, 
         f_eval_, 
-        i_rep
+        i_rep, 
         ):
 
     # define problem
@@ -62,9 +62,6 @@ def opt_ENTMOOT(
     Xtrain = t_.init_points[i_rep]
     Ytrain = np.array([t_.fun_test(i) for i in Xtrain])
     samples_number = Xtrain.shape[0]
-
-    # # generate initial samples in addition to the starting sample
-    # train_y_rand,train_x_rand = Random_searchENT(t_.fun_test, n_p=N_x_, bounds_rs=bounds_, iter_rs=n_rs)
 
     # add starting point and random points
     train_x = np.insert(Xtrain, 0, x_start, axis=0).transpose()
@@ -93,13 +90,22 @@ def opt_ENTMOOT(
     # add constraint that all variables should coincide
     # model_gur.addConstr(x == y)
 
-    my_constraint = t_.con_test
+    # if t_.func_type == 'WO_f':
+        
+    #     my_constraint1 = t_.WO_con1_test
+    #     my_constraint2 = t_.WO_con2_test
+    #     test1 = my_constraint1(model_gur._all_feat)
+    #     test2 = my_constraint2(model_gur._all_feat)
+    #     model_gur.addConstr(test1>=0)
+    #     model_gur.addConstr(test2>=0)
 
-    test = my_constraint(model_gur._all_feat)
+    #introduce penalty value
+    pnlty=5000000
 
-    # print(model_gur._all_feat)
+    # my_constraint = t_.con_test
+    # test = my_constraint(model_gur._all_feat)
+    # model_gur.addConstr(test>=0)
 
-    model_gur.addConstr(test>=0)
     model_gur.update()
     opt_gur = GurobiOptimizer(problem_config, params=params_gurobi)
 
@@ -121,10 +127,21 @@ def opt_ENTMOOT(
 
         x_opt_eval = np.array(res_gur.opt_point).reshape((len(res_gur.opt_point), 1))
 
+        # get constraint values
+        con_val = t_.con_test(x_opt_eval)
+        print(con_val)
+
         # in order for t_.fun_test to evaluate the optimal point, it has to be transformed from a list of length n_x 
         # to a numpy array of shape (2,1)
-        opt_trajectory_outputs[idx, 0] = t_.fun_test(x_opt_eval)
-        # opt_trajectory_outputs[idx, 0] = blackbox_ground_truth(opt_trajectory_inputs)[-1,0]
+
+        # the goal is to have the objective function low. therefore the penalty term should increase the obj fct'''
+        '''
+        con_val is negative when violated, so I put a - to reverse it and when I take the maximum I access that value
+        then I add this to iuncrease the objective funciton value
+        '''
+        con_val_neg = [-i for i in con_val]
+        con_val_neg.append(0)
+        opt_trajectory_outputs[idx, 0] = t_.fun_test(x_opt_eval) + pnlty*np.max(con_val_neg)
 
     return None, None, None, None, np.array(opt_trajectory_inputs), None, np.array(opt_trajectory_inputs)[-1], None, None
 

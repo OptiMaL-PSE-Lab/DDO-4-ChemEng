@@ -3,10 +3,6 @@ from scipy.optimize import direct, Bounds
 import scipy
 import numpy as np
 
-#########################
-# --- Random search --- #
-#########################
-
 def COBYLA(
         f,
         x_dim, #TODO here the functionality of multiple input dimensions has to be implemented
@@ -40,6 +36,7 @@ def COBYLA(
         x_start, 
         method='COBYLA', 
         constraints = constraints,
+        bounds=bounds,
         options={'maxfev': iter_, 'disp': False},
         callback = record_trajectory,
         ) 
