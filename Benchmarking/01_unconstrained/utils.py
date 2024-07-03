@@ -12,11 +12,11 @@ Created on Fri Aug 18 18:44:12 2023
 import matplotlib.pyplot as plt
 import copy
 # importing algorithms
-from BFGS_multistart import* 
-from Stochastic_local_search import* 
+# from BFGS_multistart import* 
+# from Stochastic_local_search import* 
 from Scipy_opt_algs import*
-from BO_NpScpy import*
-from COBYQA import *
+# from BO_NpScpy import*
+# from COBYQA import *
 # importing test functions
 from test_function import* 
 import os
