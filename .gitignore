@@ -32,3 +32,7 @@
 *.rar
 *.tar
 *.zip
+
+# Tools
+Benchmarking\01_unconstrained\ruff.toml
+Benchmarking/01_unconstrained/ruff.toml
