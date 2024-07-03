@@ -7,6 +7,7 @@ Created on Sat Aug 19 18:00:56 2023
 
 import numpy as np
 import copy
+from CSTR_PID import *
 
 class Test_function:
     
@@ -213,7 +214,17 @@ class Test_function:
                 [1.045742654831773, 3.52680512392919]
                 ],
                 ])
-    
+        
+        if self.func_type == 'cstr_pid_f':
+            self.x0 = np.array([ 4.46715341e-05,  4.99993980e+00,  4.99995537e+00,  2.03103290e+00,
+                                3.00941720e+00,  1.18583680e+00,  1.99993758e+00,  1.99993758e+00,
+                                1.99993758e+00,  1.99993758e+00,  1.99993758e+00,  1.99993758e+00,
+                                1.99993758e+00,  1.99993758e+00,  1.99993758e+00,  1.83520459e+02,
+                                4.99995535e+00,  1.46760347e+00,  2.39717774e+00,  3.14432454e+00,
+                                1.79223282e+00,  8.76534798e-01,  1.52490607e-01,  4.08452593e-01,
+                                -9.30694191e-01, -1.39481735e+00, -6.57091280e-01, -1.85731238e+00,
+                                1.85499957e+00,  1.57295435e+00, -1.54164575e+00,  3.80361850e+01])
+
     ################    
     # run function #
     ################
@@ -343,7 +354,23 @@ class Test_function:
             
             # return objective
             return z
-            
+        
+
+        elif self.func_type == 'cstr_pid_f':
+            '''
+            Test function: cstr_pid case study function
+            '''
+            # here we need the objective function now
+            CSTR_PID_instance = CSTRSimulation()
+            z = CSTR_PID_instance.J_ControlCSTR(x)
+
+            # track f 
+            self.f_list.append(z) 
+            if self.track_x:
+                self.x_list.append(x) 
+                
+            # return objective        
+            return z         
         
     ####################    
     # re-arrange lists #
