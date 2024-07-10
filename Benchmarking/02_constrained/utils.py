@@ -6,6 +6,74 @@ import pickle
 from datetime import datetime
 import statistics
 
+#########################################
+####### Starting point generator ########
+#########################################
+import numpy as np
+
+def random_points_in_circle(n, radius, center, seed=None):
+    """
+    Generates n random points within a circle of given radius around a starting point.
+    
+    Parameters:
+    - n: int, number of random points to generate
+    - radius: float, radius of the circle
+    - center: numpy array of shape (1,2), center of the circle
+    - seed: int or None, random seed for reproducibility (default is None)
+    
+    Returns:
+    - points: numpy array of shape (n,2), containing the generated points
+    """
+    if seed is not None:
+        np.random.seed(seed)
+    
+    # Generate random angles between 0 and 2*pi
+    angles = np.random.uniform(0, 2 * np.pi, n)
+    
+    # Generate random radii with uniform distribution
+    radii = radius * np.sqrt(np.random.uniform(0, 1, n))
+    
+    # Convert polar coordinates to Cartesian coordinates
+    x = radii * np.cos(angles)
+    y = radii * np.sin(angles)
+    
+    # Combine x and y into a (n, 2) array
+    points = np.vstack((x, y)).T
+    
+    # Translate points to be around the given center
+
+    points += center
+    
+    return points
+
+
+
+###########################################
+################ DATA SAVING ##############
+###########################################
+def lab_journal(folder_path, timestamp, file_name, SafeData = False):
+    if SafeData: 
+        user_input = input("Enter the text you want to save: ").strip()
+
+        if user_input:
+            if not os.path.exists(folder_path+'/'+timestamp):
+                os.makedirs(folder_path+'/'+timestamp)
+
+            file_path = os.path.join(folder_path, timestamp, file_name)
+
+            with open(file_path, 'w') as file:
+                file.write(user_input)
+
+            print(f"Text saved to '{file_name}' in folder '{folder_path}'.")
+        else:
+            print("Please enter some text before saving.")
+    else:return
+
+def directory_exists(directory_name):
+    root_directory = os.getcwd()  # Root directory on Unix-like systems
+    directory_path = os.path.join(root_directory, directory_name)
+    return os.path.isdir(directory_path)
+
 def save_dict(target_folder, data_dict, timestamp):
     # Create a folder with current date and time
     folder_path = os.path.join(target_folder, timestamp)
@@ -31,6 +99,9 @@ def ML4CE_con_eval(
     trajectories = {}
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
+    # Save Info
+    lab_journal(home_dir, timestamp, file_name='INFO', SafeData=SafeData)
+
     #############
     # Dimension #
     #############
@@ -42,6 +113,8 @@ def ML4CE_con_eval(
 
         if bounds is None:
             bounds_             = np.array([[-5,5] for i in range(N_x_)])
+
+            # bounds  = np.array([[4., 7.], [70., 100.]])
         
         else:
             print('im here')
@@ -54,11 +127,15 @@ def ML4CE_con_eval(
             print('===================== ',i_function,'D'+str(N_x_))
             trajectories[dim_S][i_function]              = {}
             trajectories[dim_S][i_function]['all means'] = {}
+            trajectories[dim_S][i_function]['all means g'] = {}
             trajectories[dim_S][i_function]['all 90']    = {}
             trajectories[dim_S][i_function]['all 10']    = {}
+            trajectories[dim_S][i_function]['all 90 g']    = {}
+            trajectories[dim_S][i_function]['all 10 g']    = {}
             trajectories[dim_S][i_function]['f_list']    = {}
             trajectories[dim_S][i_function]['x_list']    = {}
             trajectories[dim_S][i_function]['vio_g']     = {}
+            trajectories[dim_S][i_function]['vio_g_values']     = {}
             all_f_                                       = []
             randShift_l                                  = np.random.uniform(-3,3, (reps,N_x_))
             
@@ -76,12 +153,12 @@ def ML4CE_con_eval(
                 trajectories[dim_S][i_function]['f_list'][str(i_algorithm.__name__)] = []
                 trajectories[dim_S][i_function]['x_list'][str(i_algorithm.__name__)] = []
                 trajectories[dim_S][i_function]['vio_g'][str(i_algorithm.__name__)] = []
+                trajectories[dim_S][i_function]['vio_g_values'][str(i_algorithm.__name__)] = []
 
                 ###############
                 # Repetitions #
                 ###############
                 for i_rep in range(reps):
-                    
                     # random shift
                     x_shift_ = randShift_l[i_rep,:].reshape((N_x_,1))
                     # test function
@@ -89,23 +166,52 @@ def ML4CE_con_eval(
                     # algorithm
                     a, b, team_names, cids, X_opt_plot, TR_l, xnew, backtrck_l, samples_number = i_algorithm(t_, N_x_, bounds_, f_eval_, i_rep) #X_opt_plot, TR_l, xnew, backtrck_l, samples_number are for plotting
                     # post-processing
-                    t_.best_f_list()                    # List of best points so far
-                    t_.pad_or_truncate(f_eval_)
+                    X_all_pre = t_.x_list
+                    X_all = []
+                    # make sure to even-out the trajectory lengths
+                    if len(X_all_pre)<f_eval_: 
+                        x_last = X_all_pre[-1]
+                        X_all = X_all_pre + [x_last]*(f_eval_ - len(X_all_pre))
+                    elif len(X_all_pre)>f_eval_:
+                        x_last = X_all_pre[:f_eval_][-1]
+                        X_all = X_all_pre[:f_eval_] + [x_last]*(f_eval_ - len(X_all_pre[:f_eval_]))
+                    else: X_all = X_all_pre
+                    X_all = np.array(X_all)
+                    # capture constraint handling
+                    trajectories[dim_S][i_function]['vio_g_values'][str(i_algorithm.__name__)].append([-t_.con_test(x) for x in X_all])
+                    # re-test for feasibility
+                    f_feas = Test_function(i_function, N_x_, True)
+                    if i_function == 'WO_f':
+                        X_feas = [x for x in X_all if f_feas.WO_con1_test(x) > 0 and f_feas.WO_con2_test(x) > 0]
+                    else:
+                        X_feas = [x for x in X_all if f_feas.con_test(x) > 0]
+                    # produce function values for ranking
+                    for x in X_feas: f_feas.fun_test(x)
+                    # get best evaluations
+                    f_feas.best_f_list()
+                    f_feas.pad_or_truncate(f_eval_)
                     # store result
-                    trajectories[dim_S][i_function][str(i_algorithm.__name__)].append(copy.deepcopy(t_.best_f_c))
-                    trajectories[dim_S][i_function]['f_list'][str(i_algorithm.__name__)].append(copy.deepcopy(t_.f_list))
-                    trajectories[dim_S][i_function]['x_list'][str(i_algorithm.__name__)].append(copy.deepcopy(t_.x_list))
+                    trajectories[dim_S][i_function][str(i_algorithm.__name__)].append(copy.deepcopy(f_feas.best_f_c))
+                    trajectories[dim_S][i_function]['f_list'][str(i_algorithm.__name__)].append(copy.deepcopy(f_feas.f_list))
+                    trajectories[dim_S][i_function]['x_list'][str(i_algorithm.__name__)].append(copy.deepcopy(f_feas.x_list))
                     trajectories[dim_S][i_function]['vio_g'][str(i_algorithm.__name__)].extend(copy.deepcopy(t_.g_list))
                     # safe data in an overwriting fashion
                     if SafeData == True: save_dict(home_dir, trajectories, timestamp)
                 # statistics from each algorithm for a function    
                 l_   = np.array(trajectories[dim_S][i_function][str(i_algorithm.__name__)])
+                l_g_ = np.array(trajectories[dim_S][i_function]['vio_g_values'][str(i_algorithm.__name__)]).reshape(l_.shape)
                 m_   = np.mean(l_, axis=0)
-                q10_ = np.quantile(l_, 0.05, axis=0)
-                q90_ = np.quantile(l_, 0.95, axis=0)
+                m_g_  = np.mean(l_g_, axis=0)
+                q10_ = np.quantile(l_, 0.10, axis=0)
+                q10_g_ = np.quantile(l_g_, 0.10, axis=0)
+                q90_ = np.quantile(l_, 0.90, axis=0)
+                q90_g_ = np.quantile(l_g_, 0.90, axis=0)
                 trajectories[dim_S][i_function]['all means'][str(i_algorithm.__name__)] = copy.deepcopy(m_)
+                trajectories[dim_S][i_function]['all means g'][str(i_algorithm.__name__)] = copy.deepcopy(m_g_)
                 trajectories[dim_S][i_function]['all 90'][str(i_algorithm.__name__)]    = copy.deepcopy(q10_)
                 trajectories[dim_S][i_function]['all 10'][str(i_algorithm.__name__)]    = copy.deepcopy(q90_)
+                trajectories[dim_S][i_function]['all 90 g'][str(i_algorithm.__name__)]    = copy.deepcopy(q10_g_)
+                trajectories[dim_S][i_function]['all 10 g'][str(i_algorithm.__name__)]    = copy.deepcopy(q90_g_)
                 all_f_.append(copy.deepcopy(l_))
                 info.append({'alg_name': str(i_algorithm.__name__), 'team names': team_names, 'CIDs': cids})
                 # safe data in an overwriting fashion
@@ -121,6 +227,7 @@ def ML4CE_con_eval(
     # over-write one last time
     if SafeData == True:
         
+        # Safe Data
         save_dict(home_dir, trajectories, timestamp)
 
         return info, trajectories, timestamp
@@ -299,7 +406,7 @@ def ML4CE_con_table(
     return test_res, vio_dict
 
 
-def ML4CE_con_table_plot(array, functions_test, algorithms_test, N_x_l, SafeFig = False):
+def ML4CE_con_table_plot(array, functions_test, algorithms_test, N_x_l, home_dir, timestamp, SafeFig = False):
     
     columns = functions_test + ['Multimodal','Unimodal','All'] # !!! Do not change this order !!!
     rows_names_l = ['D' + str(num) for num in N_x_l]
@@ -329,16 +436,20 @@ def ML4CE_con_table_plot(array, functions_test, algorithms_test, N_x_l, SafeFig 
                 directory_path = os.path.join(root_directory, directory_name)
                 return os.path.isdir(directory_path)
 
-            directory_name = 'images/tables'
+            directory_name = os.path.join(home_dir, timestamp, 'tables')
+
             if directory_exists(directory_name):
 
                 plt.savefig(directory_name + '/{}.png'.format(algorithms_test[i].__name__))
             else:
-                print(f"The directory '{directory_name}' does not exist in the root directory.")
+                print(f"The directory '{directory_name}' does not exist in the root directory. Creating directory.")
+                os.mkdir(directory_name)
+                plt.savefig(directory_name + '/{}.png'.format(algorithms_test[i].__name__))
         
             plt.close()
 
         else:
+            plt.title(algorithms_test[i].__name__)
             plt.show()
 
 def ML4CE_con_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, timestamp, SafeFig=False):
@@ -360,24 +471,25 @@ def ML4CE_con_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, timest
                 alg_index = alg_indices[i_alg]  # Get the index of the algorithm
                 color = colors[alg_index]
                 line_style = line_styles[alg_index % len(line_styles)]  # Use modulo to cycle through line styles
-                plt.plot(trial_, color=color, linestyle=line_style, lw=3, label=str(i_alg.__name__))
+                plt.plot(trial_, '-o', color=color, linestyle=line_style, lw=3, label=str(i_alg.__name__), markersize = 10)
                 x_ax = np.linspace(0, len(down_), len(down_), endpoint=False)
                 plt.gca().fill_between(x_ax,down_, up_, color=color, alpha=0.2)
 
-                # Calculate the position of the vertical line based on the length of the trajectory
-                length = len(down_)
-                if length == 20:
-                    vline_pos = 5
-                elif length == 50:
-                    vline_pos = 10
-                elif length == 100:
-                    vline_pos = 15
-                else:
-                    vline_pos = None  # Or set a default value if needed
+                #### NO VERTICAL LINE IN CONSTRAINT SINCE WE MEASURE ALL REPETITIONS ################
+                # # Calculate the position of the vertical line based on the length of the trajectory
+                # length = len(down_)
+                # if length == 20:
+                #     vline_pos = 5
+                # elif length == 50:
+                #     vline_pos = 10
+                # elif length == 100:
+                #     vline_pos = 15
+                # else:
+                #     vline_pos = None  # Or set a default value if needed
 
-                # Add the vertical line if a valid position is calculated
-                if vline_pos is not None:
-                    plt.axvline(x=vline_pos, color='red', linestyle='--', linewidth=2)
+                # # Add the vertical line if a valid position is calculated
+                # if vline_pos is not None:
+                #     plt.axvline(x=vline_pos, color='black', linestyle='--', linewidth=2)
 
                 # Setting x-axis ticks to integer values starting from 0 and showing every 5th tick
                 tick_positions = np.arange(0, len(down_), 5)
@@ -414,6 +526,83 @@ def ML4CE_con_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, timest
                     os.mkdir(directory_name)
                     plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]))
 
+
+def ML4CE_con_graph_abs_g(test_res, algs_test, funcs_test, N_x_l, home_dir, timestamp, SafeFig=False):
+
+    colors = plt.cm.tab10(np.linspace(0, 1, len(algs_test)))
+    line_styles = ['-', '--', '-.', ':']  
+    alg_indices = {alg: i for i, alg in enumerate(algs_test)}
+
+    n_f = len(funcs_test)
+
+    for i_dim in range(len(N_x_l)):
+        dim_S = 'D' + str(N_x_l[i_dim])
+        for i_fun in range(n_f):
+            plt.figure(figsize=(15, 15))
+            for i_alg in algs_test:
+                trial_ = test_res[dim_S][funcs_test[i_fun]]['all means g'][str(i_alg.__name__)]
+                up_     = test_res[dim_S][funcs_test[i_fun]]['all 90 g'][str(i_alg.__name__)]
+                down_   = test_res[dim_S][funcs_test[i_fun]]['all 10 g'][str(i_alg.__name__)]
+                alg_index = alg_indices[i_alg]  # Get the index of the algorithm
+                color = colors[alg_index]
+                line_style = line_styles[alg_index % len(line_styles)]  # Use modulo to cycle through line styles
+                plt.plot(trial_, '-o', color=color, linestyle=line_style,  lw=3, label=str(i_alg.__name__), markersize = 10)
+                x_ax = np.linspace(0, len(down_), len(down_), endpoint=False)
+                plt.gca().fill_between(x_ax,down_, up_, color=color, alpha=0.2)
+
+                # Add vertical line at x=0
+                plt.axhline(y=0, color='black', linestyle='--', linewidth=2)
+
+                #### NO VERTICAL LINE IN CONSTRAINT SINCE WE MEASURE ALL REPETITIONS ################
+                # # Calculate the position of the vertical line based on the length of the trajectory
+                # length = len(down_)
+                # if length == 20:
+                #     vline_pos = 5
+                # elif length == 50:
+                #     vline_pos = 10
+                # elif length == 100:
+                #     vline_pos = 15
+                # else:
+                #     vline_pos = None  # Or set a default value if needed
+
+                # # Add the vertical line if a valid position is calculated
+                # if vline_pos is not None:
+                #     plt.axvline(x=vline_pos, color='black', linestyle='--', linewidth=2)
+
+                # # Setting x-axis ticks to integer values starting from 0 and showing every 5th tick
+                tick_positions = np.arange(0, len(down_), 5)
+                if (len(down_) - 1) % 5 != 0:  # If the last position is not already included
+                    tick_positions = np.append(tick_positions, len(down_) - 1)
+                tick_labels = np.arange(0, len(down_), 5)
+                if len(tick_labels) < len(tick_positions):
+                    tick_labels = np.append(tick_labels, len(down_) - 1)
+
+                plt.xticks(tick_positions, tick_labels, fontsize=24, fontname='Times New Roman')
+
+            plt.ylabel('constraint value', fontsize = '28', fontname='Times New Roman')
+            plt.xlabel('iterations', fontsize = '28', fontname='Times New Roman')
+            # plt.yscale('log')
+            plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24})
+            plt.tick_params(axis='x', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of x ticks
+            plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
+            # plt.title(funcs_test[i_fun] + ' ' + dim_S + ' convergence plot')
+            # grid(True)
+        
+            if SafeFig == True:
+
+                def directory_exists(directory_name):
+                    root_directory = os.getcwd()  # Root directory on Unix-like systems
+                    directory_path = os.path.join(root_directory, directory_name)
+                    return os.path.isdir(directory_path)
+
+                directory_name = os.path.join(home_dir, timestamp, 'trajectory_plots_1D')
+                if directory_exists(directory_name):
+
+                    plt.savefig(directory_name + '/{}_{}_g_1D.png'.format(dim_S, funcs_test[i_fun]))
+                else:
+                    print(f"The directory '{directory_name}' does not exist in the root directory.")
+                    os.mkdir(directory_name)
+                    plt.savefig(directory_name + '/{}_{}_g_1D.png'.format(dim_S, funcs_test[i_fun]))
 
 def ML4CE_con_contours(
         obj_func, 
@@ -468,7 +657,6 @@ def ML4CE_con_contours(
     if func_type == 'Rosenbrock_f':
         ax3.plot(con_list,x2, 'black', linewidth=3) #!!! careful here where to put x1 and x2
     elif func_type == 'WO_f':
-        print('here')
         ax3.plot(x1,con_list1, 'black', linewidth=3)
         ax3.plot(x1,con_list2, 'black', linewidth=3)
     else:
@@ -515,7 +703,6 @@ def ML4CE_con_contours(
 
         def directory_exists(directory_name):
             root_directory = os.getcwd()  # Root directory on Unix-like systems
-            print('root_directory: ' + root_directory)
             directory_path = os.path.join(root_directory, directory_name)
             return os.path.isdir(directory_path)
 
@@ -534,17 +721,29 @@ def ML4CE_con_contours(
 import numpy as np
 import matplotlib.pyplot as plt
 
-def ML4CE_con_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_origin, bounds_, i_rep, bounds_plot, SafeFig=False):
-    f_eval_ = 40  # trajectory length (= evaluation budget) --> Keep in mind that BO uses 10 datapoints to build the model when plotting
+def ML4CE_con_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_origin, bounds_, i_rep, bounds_plot, directory_name, SafeFig=False):
+    
+    # track time
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    
+    # create lab_journal
+    lab_journal(directory_name, timestamp,file_name='INFO', SafeData=SafeFig)
+
+    # data inputs
+    f_eval_ = 40 # trajectory length (= evaluation budget) --> Keep in mind that BO uses 10 datapoints to build the model when plotting
     track_x = True
     colors = plt.cm.tab10(np.linspace(0, 1, len(algorithms_test)))
     alg_indices = {alg: i for i, alg in enumerate(algorithms_test)}
 
+    # perform plotting
     for fun_ in functions_test:
-        t_ = Test_function(fun_, N_x_, track_x)
+        f_contour = Test_function(fun_, N_x_, track_x)
 
+        ####################################
+        ### CONTOUR AND CONSTRAINT LINES ###
+        ####################################
         # evaluate grid with vmap
-        n_points = 100
+        n_points = 50
         x1lb = bounds_plot[0][0]
         x1ub = bounds_plot[0][1]
         x1 = np.linspace(start=x1lb, stop=x1ub, num=n_points)
@@ -563,31 +762,33 @@ def ML4CE_con_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_orig
         # Iterate over each element and apply the function
         for i in range(n_points):
             for j in range(n_points):
-                y[i, j] = t_.fun_test(np.array([[X1[i, j], X2[i, j]]]).flatten())
+                y[i, j] = f_contour.fun_test(np.array([[X1[i, j], X2[i, j]]]).flatten())
 
         # add objective contour
         ax3.contour(X1, X2, y, 50)
 
-        if t_.func_type == 'WO_f':
-            con_list1 = [t_.WO_con1_plot(x_i) for x_i in x1]
-            con_list2 = [t_.WO_con2_plot(x_i) for x_i in x1]
+        if fun_ == 'WO_f':
+            con_list1 = [f_contour.WO_con1_plot(x_i) for x_i in x1]
+            con_list2 = [f_contour.WO_con2_plot(x_i) for x_i in x1]
 
         else:
             # evaluate list of points for constraint plot
-            con_list = [t_.con_plot(x_i) for x_i in x2]
-
-        
+            con_list = [f_contour.con_plot(x_i) for x_i in x2]
 
         # add constraints to plot
-        if t_.func_type == 'Rosenbrock_f':
+        if fun_ == 'Rosenbrock_f':
             ax3.plot(con_list,x2, 'black', linewidth=3) #!!! careful here where to put x1 and x2
-        elif t_.func_type == 'WO_f':
-            print('here')
+        elif fun_ == 'WO_f':
             ax3.plot(x1,con_list1, 'black', linewidth=3)
             ax3.plot(x1,con_list2, 'black', linewidth=3)
         else:
             ax3.plot(x1,con_list, 'black', linewidth=3) #!!! careful here where to put x1 and x2
+        
+        ax3.axis([x1lb,x1ub,x2lb,x2ub])
 
+        ############################
+        ### PERFORM OPTIMIZATION ###
+        ############################
         for alg_ in algorithms_test:
             print(alg_)
 
@@ -596,29 +797,39 @@ def ML4CE_con_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_orig
             color = colors[alg_index]
 
             # initiate test function
-            f_ = Test_function(fun_, N_x_, track_x)
+            f_plot = Test_function(fun_, N_x_, track_x)
 
             # perform optimization
-            a, b, team_names, cids, c, d, e, f, g = alg_(f_, N_x_, bounds_, f_eval_, i_rep)
-            X_opt = np.array(f_.x_list[:f_eval_+1])  # needs to be capped because of COBYLA not respecting the budget
+            a, b, team_names, cids, c, d, e, f, g = alg_(f_plot, N_x_, bounds_, f_eval_, i_rep)
 
-            # connect best-so-far
-            best_points = []
-            best_value = float('inf')  # Initialize with a high value
+            # get and plot all evaluations
+            X_all = np.array(f_plot.x_list)
+            ax3.scatter(X_all[:,0], X_all[:,1], marker='o', color=color)
 
-            for point in X_opt:
-                y = f_.fun_test(point)
-                if y < best_value:
-                    best_value = y
-                    best_points.append(point)
+            # re-test for feasibility
+            f_feas = Test_function(fun_, N_x_, track_x)
 
-            best_values_x1 = [point[0] for point in best_points]
-            best_values_x2 = [point[1] for point in best_points]
+            if fun_ == 'WO_f':
 
+                X_feas = [x for x in X_all if f_feas.WO_con1_test(x) > 0 and f_feas.WO_con2_test(x) > 0]
+            else:
+
+                X_feas = [x for x in X_all if f_feas.con_test(x) > 0]
+
+            # produce function values for ranking
+            for x in X_feas: f_feas.fun_test(x)
+
+            # get best evaluations
+            f_feas.best_f_list()
+
+            # plot
+            best_values_x1 = [point[0] for point in f_feas.best_x]
+            best_values_x2 = [point[1] for point in f_feas.best_x]
             ax3.plot(best_values_x1, best_values_x2, marker='o', linestyle='-', color=color, label=alg_.__name__)
 
             # Add starting point to the trajectory
-            ax3.plot(X_opt[0,0,0], X_opt[0,1,0], marker='s', color='black', markersize=10)
+            try: ax3.plot(X_all[0,0], X_all[0,1], marker='s', color='black', markersize=10)
+            except: ax3.plot(X_all[0,0,0], X_all[0,1,0], marker='s', color='black', markersize=10)
 
             ax3.axis([x1lb, x1ub, x2lb, x2ub])
             plt.ylabel('X2', fontsize='28', fontname='Times New Roman')
@@ -629,21 +840,16 @@ def ML4CE_con_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_orig
         # Add legend
         plt.legend(fontsize=24)
 
+        # Data Saving
         if SafeFig == True:
-
-            def directory_exists(directory_name):
-                root_directory = os.getcwd()  # Root directory on Unix-like systems
-                directory_path = os.path.join(root_directory, directory_name)
-                return os.path.isdir(directory_path)
-
-            directory_name = 'images/trajectory_plots_2D'
-            if directory_exists(directory_name):
-
-                plt.savefig(directory_name + '/{}_allin1.png'.format(f_.func_type))
+            if directory_exists(directory_name + '/' + timestamp):
+                plt.savefig(directory_name + '/' + timestamp + '/{}_allin1.png'.format(fun_))
             else:
-                print(f"The directory '{directory_name}' does not exist in the root directory.")
-
+                print(f"The directory '{directory_name}' does not exist in the root directory. Creating directory.")
+                os.mkdir(directory_name+ '/' + timestamp)
+                plt.savefig(directory_name + '/' + timestamp + '/{}_allin1.png'.format(fun_))
             plt.close
 
         else:
             plt.show()
+    

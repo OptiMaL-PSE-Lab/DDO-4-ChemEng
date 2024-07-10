@@ -73,3 +73,45 @@ def opt_CUATRO(t_, N_x_, bounds_, f_eval_, has_x0 = False):
 
     # print(res['f_best_so_far'], res['x_best_so_far'])
     return None, None, None, None
+
+def opt_CUATRO_pls(t_, N_x_, bounds_, f_eval_, has_x0 = False):
+
+
+    if has_x0 == True: 
+
+        x_best = t_.x0[0].flatten()
+        iter_ = f_eval_ - 1
+
+    else:
+
+        n_rs = int(max(N_x_+1,f_eval_*.05))
+        f_best, x_best = Random_search(t_, N_x_, bounds_, n_rs)
+        iter_          = f_eval_ - n_rs
+
+    def t_CUATRO(x):
+        return t_.fun_test(x), []
+
+    solver_instance = CUATRO(
+                    init_radius = 0.1, # how much radius should the initial area cover 
+                    beta_red = 0.001**(2/iter_), # trust region radius reduction heuristic
+                    rescale_radius=True, # scale radii to unit box
+                    method = 'local',
+                    N_min_samples = 6, # 
+                    constr_handling = 'Discrimination', # or 'Regression'
+                    sampling = 'base', # maximize closest distance in trust region exploration
+                    # explore = 'feasible_sampling', 
+                    # dim_red='PLS',
+                    dim_red='bandit'
+                    # reject exploration samples that are predicted to violate constraints
+                )
+
+    res = solver_instance.run_optimiser(
+        sim=t_CUATRO, 
+        x0=x_best, 
+        bounds=bounds_, 
+        max_f_eval=iter_, 
+        n_pls=2, 
+        )
+
+    # print(res['f_best_so_far'], res['x_best_so_far'])
+    return None, None, None, None

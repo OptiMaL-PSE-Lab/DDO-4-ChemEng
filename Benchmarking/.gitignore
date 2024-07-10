@@ -11,6 +11,8 @@
 
 *.pyd
 *.pyc
+*.png
+*.pkl
 
 #Compiled objects#
 *.c

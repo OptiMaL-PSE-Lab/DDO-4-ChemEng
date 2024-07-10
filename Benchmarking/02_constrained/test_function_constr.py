@@ -14,7 +14,9 @@ from WO import *
 ### threshold for constraint violation ###
 ##########################################
 
-vio = 0.1
+# This was originally suggested to be 0.1
+# I changed it to 0.001 to count 
+vio = 0.001
 
 #######################
 # calculate distances #
@@ -57,7 +59,12 @@ class Test_function:
         # initialize lists
         self.f_list = []; 
         self.x_list = []; 
-        self.g_list = []; 
+        self.g_list = [];
+        self.g_value_list = []
+
+        # for WO
+        self.g_list1 = []
+        self.g_list2 = []
 
         # function specifications
         self.func_type = func_type
@@ -68,10 +75,19 @@ class Test_function:
             self.x0 = np.array(
                 ([[-3.5],[4]],
                 [[-4.7],[0]],
-                [[-1],[1]]),
-                )
+                [[-1],[1]],
+                [[-4.7], [4.5]],
+                [[-4.5], [3]],
+                [[-4], [1]],
+                [[-3], [1]],
+                [[-3], [2]],
+                [[-1], [3]],
+                [[0.5], [2]],
+                ))
 
-            self.init_points = np.array([[ #TODO these are manually copied random points and need to be automated
+            self.init_points = np.array(
+                [
+                [
                 [-3.3530743413133854, 3.73574969572994],
                 [-3.695999175468267, 4.298600636679204],
                 [-3.324485345153229, 4.34397331429392],
@@ -81,7 +97,7 @@ class Test_function:
                 [-3.3750653613706514, 4.031628585876453],
                 [-3.6560822903968844, 4.2695814211741565],
                 [-3.402599951172502, 4.290894965399081],
-                [-3.58554000313634, 3.8960851498181146]
+                # [-3.58554000313634, 3.8960851498181146] commented out for all to have 10 (including starting)
                 ],
                 [
                 [-4.383496912801828, -0.0013634667911379683],
@@ -93,9 +109,10 @@ class Test_function:
                 [-4.855153739318994, 0.07256667216710011],
                 [-4.371620789116707, -0.2625845865624066],
                 [-4.417138114611893, 0.1138350903311236],
-                [-4.968454704380232, -0.011770250298933527],
+                # [-4.968454704380232, -0.011770250298933527],
                 ],
-                [[-1.3859377125730643, 0.8502460012604153],
+                [
+                [-1.3859377125730643, 0.8502460012604153],
                 [-0.9094882325785648, 1.0522645964081918],
                 [-0.8257802160551404, 1.2511523667547042],
                 [-1.073769078982123, 1.437282168432578],
@@ -104,16 +121,24 @@ class Test_function:
                 [-0.7949204439192279, 0.5982623762449268],
                 [-0.6452272945520198, 1.2229489570716696],
                 [-0.8448267653830063, 0.875666652279921],
-                [-0.5734729013792419, 1.2194629193024646]],
-
-                ])
+                # [-0.5734729013792419, 1.2194629193024646]
+                ],
+                ]
+                )
                             
             
         if self.func_type == 'Antonio_f':
             self.x0 = np.array(
                 ([[-4],[-4]],
                 [[-3],[1]],
-                [[1],[4]]),
+                [[1],[4]],
+                [[-4], [-3]],
+                [[-3], [-2]],
+                [[-4], [-1]],
+                [[-4], [2]],
+                [[-4], [4]],
+                [[-2], [3]],
+                [[1.5], [4]]),
             )
 
             # needs to be updated for higher dimensions # !!!!!
@@ -128,7 +153,7 @@ class Test_function:
                 [-3.5352717073354922, -3.93764772917438],
                 [-4.388286226588492, -3.971974085341454],
                 [-3.8820488343028465, -4.3689041148478545],
-                [-4.2178130348809955, -3.603861244697474]
+                # [-4.2178130348809955, -3.603861244697474]
                 ],
                 [
                 [-3.020792358572854, 1.093699653066452],
@@ -140,7 +165,7 @@ class Test_function:
                 [-2.648462121006375, 0.9002924215843959],
                 [-2.961973468399645, 0.8925521968287324],
                 [-3.3935600071374625, 0.8615225940317944],
-                [-3.364708378971091, 1.2354171389730733],
+                # [-3.364708378971091, 1.2354171389730733],
                 ],
                 [
                 [0.5881213509550786, 4.068118384332777],
@@ -152,17 +177,22 @@ class Test_function:
                 [0.8496647453266832, 3.550606273479979],
                 [1.1510961542739127, 4.1176517876307726],
                 [1.261537220618603, 3.755053800587087],
-                [1.045742654831773, 3.52680512392919]
+                # [1.045742654831773, 3.52680512392919]
                 ],
                 ])
-
-
 
         if self.func_type == 'Matyas_f':
             self.x0 = np.array(
                 ([[-4],[-4]],
                 [[-4],[4]],
-                [[-1],[2]]),
+                [[-1],[2]],
+                [[-2.5],[-4]],
+                [[-4], [-3]],
+                [[-3.5], [-1]],
+                [[-4], [1]],
+                [[-3], [2]],
+                [[-3],[4]],
+                [[-2], [4]]),
             )
             self.init_points = np.array([[
                 [-4.186356190440544, -3.8345781614272596],
@@ -174,7 +204,7 @@ class Test_function:
                 [-3.5352717073354922, -3.93764772917438],
                 [-4.388286226588492, -3.971974085341454],
                 [-3.8820488343028465, -4.3689041148478545],
-                [-4.2178130348809955, -3.603861244697474]
+                # [-4.2178130348809955, -3.603861244697474]
                 ],
                 [
                 [-4.054352730639594, 4.182246644507763],
@@ -186,7 +216,7 @@ class Test_function:
                 [-3.9468489911109974, 4.364129841768841],
                 [-3.7862484083265913, 3.68260975746392],
                 [-3.8830869545215307, 3.891982741956224],
-                [-3.7004486478680696, 4.233162414547007],
+                # [-3.7004486478680696, 4.233162414547007],
                 ],
                 [
                 [-1.321628422969357, 1.9201187760779104],
@@ -198,7 +228,7 @@ class Test_function:
                 [-0.9117065742157653, 2.398603898563745],
                 [-0.9660050845056297, 1.9757924790694936],
                 [-0.79155403650756, 1.5855211177502666],
-                [-1.4855989434252028, 1.9307039921013924]
+                # [-1.4855989434252028, 1.9307039921013924]
                 ],
                 ])
 
@@ -206,6 +236,15 @@ class Test_function:
 
             self.x0 = np.array(
                 ([[6.9], [83]],
+                 [[6.75], [72.5]],
+                 [[6.75], [75]],
+                 [[6], [75]],
+                 [[6], [80]], 
+                 [[5.5], [77.5]],
+                 [[5.5], [82.5]],
+                 [[6.75], [87.5]],
+                 [[6.25], [85]],
+                 [[6.9], [91]]
                 ))
             
             self.init_points = np.array([[
@@ -218,7 +257,6 @@ class Test_function:
                 [6.9 - .5352717073354922, 83.93764772917438],
                 [6.9 + .388286226588492, 83.971974085341454],
                 [6.9 - .8820488343028465, 83.3689041148478545],
-                [6.9 + .2178130348809955, 83.603861244697474],
                 ],
                 ])
             
@@ -289,8 +327,8 @@ class Test_function:
 
         if self.func_type == 'Matyas_f':
 
-            x = np.array(x)
-            x = x.reshape((self.n_x,1))
+            x = np.array(x).flatten()
+            # x = x.reshape((self.n_x,1))
 
             z = 0.26*(x[0]**2 + x[1]**2) - 0.48*x[0]*x[1]
 
@@ -308,6 +346,8 @@ class Test_function:
 
         if self.func_type == 'WO_f':
 
+            x = np.array(x).flatten()
+
             # here we need the objective function now
             WO_instance = WO_system()
             z = WO_instance.WO_obj_sys_ca_noise_less(x)
@@ -315,7 +355,7 @@ class Test_function:
             # track f 
             self.f_list.append(z) 
             if self.track_x:
-                self.x_list.append(x) 
+                self.x_list.append(x.flatten()) 
                 
             # return objective        
             return z
@@ -346,26 +386,27 @@ class Test_function:
 
             # if g1 > vio:
             if isinstance(g1, float) and g1 > vio:
-                # print('g1 violated')
+                # # print('g1 violated')
 
-                def g_func(x):
-                    return -1.27 + 2.83*x - 0.69*x**2
+                # def g_func(x):
+                #     return -1.27 + 2.83*x - 0.69*x**2
             
-                # Find the closest point on the function
+                # # Find the closest point on the function
 
-                # Swapping positions because of Rosenbrock constraint formulation
-                x_swapped = x[::-1]
-                g_closest = closest_point_on_constraint(x_swapped, g_func)
+                # # Swapping positions because of Rosenbrock constraint formulation
+                # x_swapped = x[::-1]
+                # g_closest = closest_point_on_constraint(x_swapped, g_func)
 
-                # Calculate the Euclidean distance
-                distance = eucl_dist(x_swapped, g_closest)
+                # # Calculate the Euclidean distance
+                # distance = eucl_dist(x_swapped, g_closest)
 
                 # track g 
-                self.g_list.append(distance)
+                self.g_list.append(g1)
 
             else:
                 self.g_list.append(None)
 
+            self.g_value_list.append(g1)
             return -g1
         
         ################################
@@ -382,24 +423,24 @@ class Test_function:
 
 
             if isinstance(g1, float) and g1 > vio:
-                # print('g1 violated')
+                # # print('g1 violated')
 
-                def g_func(x):
-                    return 1.5*x+0.6
+                # def g_func(x):
+                #     return 1.5*x+0.6
             
-                # Find the closest point on the function
-                g_closest = closest_point_on_constraint(x, g_func)
+                # # Find the closest point on the function
+                # g_closest = closest_point_on_constraint(x, g_func)
 
-                # Calculate the Euclidean distance
-                distance = eucl_dist(x, g_closest)
+                # # Calculate the Euclidean distance
+                # distance = eucl_dist(x, g_closest)
 
                 # track g 
-                self.g_list.append(distance)
+                self.g_list.append(g1)
 
             else:
                 self.g_list.append(None)
             
-
+            self.g_value_list.append(g1)
             return -g1
         
         ################################
@@ -417,21 +458,21 @@ class Test_function:
             if isinstance(g1, float) and g1 > vio:
                 # print('g1 violated')
 
-                def g_func(x):
-                    return 6.31225*x+3.60257
+                # def g_func(x):
+                #     return 6.31225*x+3.60257
             
-                # Find the closest point on the function
-                g_closest = closest_point_on_constraint(x, g_func)
+                # # Find the closest point on the function
+                # g_closest = closest_point_on_constraint(x, g_func)
 
-                # Calculate the Euclidean distance
-                distance = eucl_dist(x, g_closest)
+                # # Calculate the Euclidean distance
+                # distance = eucl_dist(x, g_closest)
 
                 # track g 
-                self.g_list.append(distance)
+                self.g_list.append(g1)
 
             else:
                 self.g_list.append(None)
-
+            self.g_value_list.append(g1)
             return -g1
         
 
@@ -450,19 +491,19 @@ class Test_function:
             if isinstance(g1, float) and g1 > vio:
 
                 # track g 
-                self.g_list.append(g1)
+                self.g_list1.append(g1)
 
             else:
-                self.g_list.append(None)
+                self.g_list1.append(None)
 
             if isinstance(g2, float) and g2 > vio:
 
                 # track g 
-                self.g_list.append(g2)
+                self.g_list2.append(g2)
 
             else:
-                self.g_list.append(None)
-
+                self.g_list2.append(None)
+            self.g_value_list.append([g1, g2])
             return [-g1, -g2]
 
 
@@ -480,9 +521,11 @@ class Test_function:
         if isinstance(con1_val, float) and con1_val > vio:
 
             # track g 
-            self.g_list.append(con1_val)
+            self.g_list1.append(con1_val)
+            self.g_list.append(con1_val)  # These are still added because they're needed for the statistics in utils ML4CE_con_table
 
         else:
+            self.g_list1.append(None)
             self.g_list.append(None)
 
         return -con1_val
@@ -495,9 +538,11 @@ class Test_function:
         if isinstance(con2_val, float) and con2_val > vio:
 
             # track g 
+            self.g_list2.append(con2_val)
             self.g_list.append(con2_val)
 
         else:
+            self.g_list2.append(None)
             self.g_list.append(None)
 
         return -con2_val
@@ -568,14 +613,24 @@ class Test_function:
     ####################    
     # re-arrange lists #
     ####################
-    
+
     def best_f_list(self):
         '''
         Returns
         -------
         List of best points so far
         '''
-        self.best_f = [min(self.f_list[:i]) for i in range(1,len(self.f_list))]
+        # self.best_f = [min(self.f_list[:i]) for i in range(1,len(self.f_list))]
+        self.best_f = [min(self.f_list[:i+1]) for i in range(len(self.f_list))]
+        self.best_x = [self.x_list[self.f_list.index(f)] for f in self.best_f]
+
+        ######### NOT USED #########
+        # feasible only
+        self.f_feas = [f for f in self.f_list if self.g_list[self.f_list.index(f)] is None]
+        self.x_feas = [self.x_list[self.f_list.index(f)] for f in self.f_feas]
+        # make sure to adjust_lists before this one as g_list and f_list might not have the same length
+        self.best_f_feas = [min(self.f_feas[:i+1]) for i in range(len(self.f_feas))]
+        self.best_x_feas = [self.x_list[self.f_list.index(f)] for f in self.best_f_feas]
         
     #############    
     # cut lists #
@@ -593,8 +648,7 @@ class Test_function:
         
         self.best_f_c = copy.deepcopy(self.best_f[:n_p]) + [b_last]*(n_p - len(self.best_f[:n_p]))
         self.f_list_c = copy.deepcopy(self.f_list[:n_p]) + [l_last]*(n_p - len(self.f_list[:n_p]))
-        
-        
+
 # TODO -> plot every algorithm trajectory with best, meadian, 25% and 75%
 # computer best trajectory inside class algorithm
 # compute all statistics later. 

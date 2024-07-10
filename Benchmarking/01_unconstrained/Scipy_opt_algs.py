@@ -92,7 +92,7 @@ def opt_COBYLA(f, x_dim, bounds, iter_tot, has_x0 =False):
         iter_          = iter_tot - n_rs
 
     opt = minimize(f.fun_test, x_best, method='COBYLA', 
-                   options={'maxfev': iter_}) 
+                   options={'maxiter': iter_}) 
 
     team_names = ['9','10']
     cids = ['01234567']
