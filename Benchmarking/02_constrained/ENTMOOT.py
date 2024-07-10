@@ -2,6 +2,7 @@ from entmoot import Enting, ProblemConfig, GurobiOptimizer
 import numpy as np
 from itertools import chain
 import gurobipy as gp
+from utils import *
 
 
 def Random_searchENT(f, n_p, bounds_rs, iter_rs):
@@ -41,6 +42,7 @@ def opt_ENTMOOT(
     # define problem
     # note here: algorithm unstable for some other random seed
     problem_config = ProblemConfig(rnd_seed=1234)
+    n = 9 # no of initial points to build model besides starting point.
 
     # specify dimensions and ranges
     for d_ in range(N_x_):
@@ -59,7 +61,10 @@ def opt_ENTMOOT(
     y_start = t_.fun_test(x_start)
 
     # read additional init points
-    Xtrain = t_.init_points[i_rep]
+    # Xtrain = t_.init_points[i_rep]
+    if t_.func_type == 'WO_f': radius = 0.1
+    else: radius = 0.5
+    Xtrain = random_points_in_circle(n, radius=radius, center=t_.x0[i_rep].transpose())
     Ytrain = np.array([t_.fun_test(i) for i in Xtrain])
     samples_number = Xtrain.shape[0]
 
@@ -68,7 +73,7 @@ def opt_ENTMOOT(
     train_y = np.insert(Ytrain, 0, y_start, axis=0)
 
     # subtract from iterations
-    iter_ = f_eval_ - samples_number
+    iter_ = f_eval_ - samples_number - 1
 
     # get training-dataset in the form required for the fit method of enting
     # x is a list of tuples, which represent one datapoint each. A 2D-problem has 2 entries per tuple
@@ -100,7 +105,7 @@ def opt_ENTMOOT(
     #     model_gur.addConstr(test2>=0)
 
     #introduce penalty value
-    pnlty=5000000
+    pnlty=5e8
 
     # my_constraint = t_.con_test
     # test = my_constraint(model_gur._all_feat)
@@ -128,8 +133,12 @@ def opt_ENTMOOT(
         x_opt_eval = np.array(res_gur.opt_point).reshape((len(res_gur.opt_point), 1))
 
         # get constraint values
-        con_val = t_.con_test(x_opt_eval)
-        print(con_val)
+        if t_.func_type == 'WO_f':
+            con1 = t_.WO_con1_test(x_opt_eval)
+            con2 = t_.WO_con2_test(x_opt_eval)
+            con_val = [con1, con2]
+        else:
+            con_val = t_.con_test(x_opt_eval)
 
         # in order for t_.fun_test to evaluate the optimal point, it has to be transformed from a list of length n_x 
         # to a numpy array of shape (2,1)

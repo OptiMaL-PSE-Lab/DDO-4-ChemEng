@@ -25,7 +25,11 @@ def COBYQA(
     Therefore this counts as a single evaluation from the evaluation budget
     '''
 
-    constraints = [{'type': 'ineq', 'fun': f.con_test}]
+    if f.func_type == 'WO_f': constraints = [
+        {'type': 'ineq', 'fun': f.WO_con1_test}, 
+        {'type': 'ineq', 'fun': f.WO_con2_test}
+        ]
+    else: constraints = [{'type': 'ineq', 'fun': f.con_test}]
     # constraints = f.con_test
     iter_ = f_eval_
     x_start = f.x0[i_rep].flatten()

@@ -226,10 +226,10 @@ class GP_optimizer:
             data, 
             iter_opt, 
             bounds, 
-            # multi_opt=10,
-            multi_opt=2, 
-            # multi_hyper=10,
-            multi_hyper=2, 
+            multi_opt=10,
+            # multi_opt=2, 
+            multi_hyper=10,
+            # multi_hyper=2, 
             store_data=False, 
             EI_bool=True
             ):

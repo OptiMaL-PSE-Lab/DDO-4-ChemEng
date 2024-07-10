@@ -15,6 +15,7 @@ from scipy.optimize import differential_evolution
 from tqdm import tqdm
 from pylab import grid
 from matplotlib.colors import LogNorm
+from utils import *
 
 
 
@@ -315,10 +316,7 @@ class BO:
             ndim          = Xtrain.shape[1]
             ndata         = Xtrain.shape[0]
             ytrain        = np.zeros((ng+1, ndata))
-            print(ytrain)
             funcs_system  = [obj_system] + cons_system
-
-            print(funcs_system)
 
             for ii in range(ng+1):
                 fx     = np.zeros(ndata)
@@ -328,9 +326,8 @@ class BO:
 
 
                 # not meant for multi-output
-
                 ytrain[ii,:] = fx
-                print(ytrain)
+
 
         Xtrain = np.array(Xtrain)
         ytrain = np.array(ytrain)
@@ -368,6 +365,7 @@ class BO:
         '''
         # internal calls
         cons_system = self.cons_system
+
 
         cons = []
         for con_i in range(len(cons_system)):
@@ -634,27 +632,31 @@ def CBO_opt(
         ): 
 
     '''
-    function called in the benchmarking algorithm
-    TODO this is supposed to become the function that is called from the benchmarking routine
-    this is where we want to end up with: a, b, team_names, cids = i_algorithm(t_.fun_test, N_x_, bounds_, f_eval_)
     params: parameters that define the rbf model
     X:      matrix of previous datapoints
     '''
 # comment 1233
     test_fun = f.fun_test
+    n = 9 # no of initial points to build model besides starting point.
 
-    if f.func_type == 'WO_f': test_con = [f.WO_con1_test, f.WO_con2_test]
-    else: test_con = [f.con_test]
+    if f.func_type == 'WO_f': 
+        test_con = [f.WO_con1_test, f.WO_con2_test]
+        radius = 0.1
+    else: 
+        test_con = [f.con_test]
+        radius = 0.5
 
-    Xtrain = f.init_points[i_rep]
+    # Xtrain = f.init_points[i_rep]
+
     x0 = f.x0[i_rep].flatten()
+    Xtrain = random_points_in_circle(n, radius=radius, center=f.x0[i_rep].transpose())
     samples_number = Xtrain.shape[0]
     data           = ['data0', Xtrain]
     Delta0         = 0.25
     Delta_max      =0.7; eta0=0.2; eta1=0.8; gamma_red=0.8; gamma_incr=1.2
-    f_eval_ = f_eval_ - samples_number # the initial samples in CBO_TR need to be subtracted
+    budget = f_eval_ - samples_number -1 # the initial samples in CBO_TR need to be subtracted
 
-    GP_opt = BO(  # TODO: Check whether the SafeOpt algorithm has similar hyperparameters and if these must then be packed outside the routine
+    GP_opt = BO(
         test_fun, 
         test_con,
         x0,
@@ -664,7 +666,7 @@ def CBO_opt(
         eta1,
         gamma_red,
         gamma_incr,
-        f_eval_, 
+        budget, 
         data,
         bounds = np.array(bounds), # re-constructed from google colab
         multi_opt= 10, # TODO: check, whether the other algorithms have these as well. If so, put it outside
@@ -702,20 +704,23 @@ def CBO_TR_opt(
         ): 
 
     '''
-    function called in the benchmarking algorithm
-    TODO this is supposed to become the function that is called from the benchmarking routine
-    this is where we want to end up with: a, b, team_names, cids = i_algorithm(t_.fun_test, N_x_, bounds_, f_eval_)
     params: parameters that define the rbf model
     X:      matrix of previous datapoints
     '''
-# comment 1233
+
     test_fun = f.fun_test
+    n = 9 # no of initial points to build model besides starting point.
+    
+    if f.func_type == 'WO_f': 
+        test_con = [f.WO_con1_test, f.WO_con2_test]
+        radius = 0.1
+    else: 
+        test_con = [f.con_test]
+        radius = 0.5
 
-    if f.func_type == 'WO_f': test_con = [f.WO_con1_test, f.WO_con2_test]
-    else: test_con = [f.con_test]
-
-    Xtrain = f.init_points[i_rep]
+    # Xtrain = f.init_points[i_rep]
     x0 = f.x0[i_rep].flatten()
+    Xtrain = random_points_in_circle(n, radius=radius, center=f.x0[i_rep].transpose())
     samples_number = Xtrain.shape[0]
     data           = ['data0', Xtrain]
     Delta0         = 0.25
