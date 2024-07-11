@@ -15,6 +15,7 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 from scipy.optimize import differential_evolution
+from tqdm import tqdm
 class GP_model:
     
     ###########################
@@ -474,14 +475,16 @@ class GP_optimizer:
         
         # --- optimization loop --- #
         # print('GP_optimizer: optimisation routine: now we start the optimisation loop')
-        options          = {'disp':False,'maxiter':10000}  # solver options
-        lb, ub           = bounds[:,0], bounds[:,1]
+        # options          = {'disp':False,'maxiter':10000}  # solver options
+        # lb, ub           = bounds[:,0], bounds[:,1]
         # print('GP_optimizer: optimisation routine: the startvectors for multistart are created using sobol sampling')
-        multi_startvec   = sobol_seq.i4_sobol_generate(ndim,multi_opt)
+        # multi_startvec   = sobol_seq.i4_sobol_generate(ndim,multi_opt)
         
         # optimization -- iterations
-        for i_opt in range(iter_opt-ndat):
+        # for i_opt in range(iter_opt-ndat):
 
+        iter_t = range(iter_opt-ndat)
+        for i_opt in tqdm(iter_t):
             # --- storing data --- #
             ymean_l, ystd_l = add_data(Xtest_l, ymean_l, ystd_l, i_opt, GP_m)
 
@@ -489,7 +492,7 @@ class GP_optimizer:
             
             # find good initial point
             res = differential_evolution(GP_obj_f, bounds=bounds, args=(GP_m,), 
-                                         maxiter=10, popsize=15)
+                                         maxiter=20, popsize=30)
             # refine initial point
             xbest = res.x
             res = minimize(GP_obj_f, args=(GP_m), x0=xbest, 

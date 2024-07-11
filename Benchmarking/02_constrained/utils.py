@@ -154,7 +154,6 @@ def ML4CE_con_eval(
                 trajectories[dim_S][i_function]['x_list'][str(i_algorithm.__name__)] = []
                 trajectories[dim_S][i_function]['vio_g'][str(i_algorithm.__name__)] = []
                 trajectories[dim_S][i_function]['vio_g_values'][str(i_algorithm.__name__)] = []
-
                 ###############
                 # Repetitions #
                 ###############

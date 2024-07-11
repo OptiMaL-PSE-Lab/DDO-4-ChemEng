@@ -101,7 +101,7 @@ def opt_CUATRO_pls(t_, N_x_, bounds_, f_eval_, has_x0 = False):
                     sampling = 'base', # maximize closest distance in trust region exploration
                     # explore = 'feasible_sampling', 
                     # dim_red='PLS',
-                    dim_red='bandit'
+                    dim_red='PLS'
                     # reject exploration samples that are predicted to violate constraints
                 )
 
@@ -110,7 +110,7 @@ def opt_CUATRO_pls(t_, N_x_, bounds_, f_eval_, has_x0 = False):
         x0=x_best, 
         bounds=bounds_, 
         max_f_eval=iter_, 
-        n_pls=2, 
+        n_pls=5, 
         )
 
     # print(res['f_best_so_far'], res['x_best_so_far'])

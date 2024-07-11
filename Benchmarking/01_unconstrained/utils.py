@@ -23,6 +23,7 @@ import os
 from datetime import datetime
 from pylab import grid
 import pickle
+from tqdm import tqdm
 
 '''
 how do the algorithms deal with start-data?
@@ -147,7 +148,8 @@ def ML4CE_uncon_eval(
                 ###############
                 # Repetitions #
                 ###############
-                for i_rep in range(reps):
+                for i_rep in tqdm(range(reps)):
+                # for i_rep in range(reps):
                     # random shift
                     x_shift_ = randShift_l[i_rep,:].reshape((N_x_,1))
                     # test function

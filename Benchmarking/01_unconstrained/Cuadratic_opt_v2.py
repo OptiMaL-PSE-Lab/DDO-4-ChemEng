@@ -11,6 +11,7 @@ from scipy.linalg import toeplitz
 from scipy.optimize import minimize
 import random
 import sobol_seq
+from scipy.stats import qmc
 
 ########################
 # Quadratic Regression #
@@ -29,6 +30,7 @@ class Quad_Reg_model:
         self.X_mean, self.X_std    = np.mean(X, axis=0), np.std(X, axis=0)
         self.Y_mean, self.Y_std    = np.mean(Y, axis=0), np.std(Y, axis=0)
         self.X_norm, self.Y_norm   = (X-self.X_mean)/self.X_std, (Y-self.Y_mean)/self.Y_std
+        # print(self.X_norm)
         self.x_c                   = (x_centre - self.X_mean)/self.X_std
 
         # GP variable definitions
@@ -43,7 +45,17 @@ class Quad_Reg_model:
         pOpt           = np.zeros((n_par))
         localsol       = [0.]*multi_start                        
         localval       = np.zeros((multi_start))   
-        multi_startvec = sobol_seq.i4_sobol_generate(n_par, multi_start)
+        # Initialize Sobol generator
+        sobol = qmc.Sobol(d=n_par, scramble=False)
+
+        # Generate Sobol sequence
+        multi_startvec = sobol.random(n=multi_start)
+
+
+        # multi_startvec = sobol_seq.i4_sobol_generate(n_par, multi_start)
+        # multi_startvec = np.random.uniform(0,1, size=(n_par, multi_start))
+
+        # print(multi_startvec)
         lb, ub         = 0, 1
         bounds         = np.array([[-10,10] for i in range(n_par)])
         
@@ -249,7 +261,7 @@ def update_tr_center(quad_M, x_best, f_best, f_list_i, iter_i, n_rs,
 ##################################################
 # --- Local search with quadratic surrogate  --- #
 ##################################################
-
+from tqdm import tqdm
 # (f, N_x: int, bounds: array[array[float]], N: int = 100) -> array(N_X), float
 def LS_QM_v2(f, x_dim, bounds, iter_tot, has_x0 = False):
     '''
@@ -301,12 +313,14 @@ def LS_QM_v2(f, x_dim, bounds, iter_tot, has_x0 = False):
     f_best                         = f_list[minindex]
     x_best                         = x_list[minindex,:]
 
+    print('im here')
     # === Estimate quadratic model === #
     LSQM_m = Quad_Reg_model(x_list[0:n_rs,:], f_list[0:n_rs].reshape(-1,1), x_best)
     # build optimization routine inside Quad_Reg_model, remember to de-normalize
-
-    # === main loop === #
-    for iter_i in range(n_i):
+    iter_i_ = range(n_i)
+    for iter_i in tqdm(iter_i_):
+    # # === main loop === #
+    # for iter_i in range(n_i):
         # print('iter ',iter_i,'/',n_i,' radius = ',r_t)
         # minimise the surrogate model
         x_trial = LSQM_m.opt_quadratic_model(x_best, r_t)
