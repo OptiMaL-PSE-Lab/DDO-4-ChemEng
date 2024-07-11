@@ -186,7 +186,7 @@ class CSTRSimulation:
                 # delta t
                 ts = [t_c[i], t_c[i + 1]]
                 # desired setpoint
-                x_sp = np.array([x0[0], Cb_des[i], x0[2], T_des[i], x0[4]])
+                x_sp = np.array([x0[0], x0[1], x0[2], T_des[i], x0[4]])
                 # compute control
                 if i == 0:
                     Tc[i], Fin[i] = self.PID(Ks, x0, x_sp, np.array([[x0[0], Tc_lb, x0[2], Fin_lb, x0[4]]]))
