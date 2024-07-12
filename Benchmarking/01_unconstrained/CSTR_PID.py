@@ -6,10 +6,13 @@ from pylab import grid
 eps = np.finfo(float).eps
 import copy
 import time
+from Scipy_opt_algs import *
+import pickle
 
 class CSTRSimulation:
-    def __init__(self, repetitions=3):
+    def __init__(self, repetitions=1):
         self.repetitions = repetitions
+        self.traj_pid = {'t_c': [], 'T': [], 'Tc': []}
 
         # Initial conditions for the states
         x0 = np.zeros(5)
@@ -23,7 +26,7 @@ class CSTRSimulation:
         n = 11  # number of intervals
         Tf = 25  # process time (min)
         t = np.linspace(0, Tf, n)
-
+        
         # Store initial conditions and time
         self.data_res = {}
         self.data_res["x0"] = x0
@@ -128,6 +131,11 @@ class CSTRSimulation:
         self.data_res["Fin_ct"] = copy.deepcopy(Fin)
         self.data_res["T_ct"] = copy.deepcopy(T)
 
+    def add_data_point(self, t_c, T, Tc):
+        self.traj_pid['t_c'].append(t_c)
+        self.traj_pid['T'].append(T)
+        self.traj_pid['Tc'].append(Tc)
+
 
     def cstr(self, x, t, Tc, Fin):
         Ca, Cb, Cc, T, V = x
@@ -208,7 +216,7 @@ class CSTRSimulation:
                 x[3] = T[i + 1]
                 x[4] = V[i + 1]
                 # compute tracking error
-                e_history.append((x_sp - x))
+                e_history.append(x_sp - x)
 
             # == objective == #
             # production
@@ -233,66 +241,78 @@ class CSTRSimulation:
             T_dat[:, rep_i] = copy.deepcopy(T)
             u_cha_dat[:, rep_i] = copy.deepcopy(u_cha)
 
+        # Define the font properties for Times New Roman
+        plt.rcParams.update({
+            'font.family': 'Times New Roman',
+            'font.size': 12,
+            'axes.titlesize': 12,
+            'axes.labelsize': 12,
+            'xtick.labelsize': 12,
+            'ytick.labelsize': 12,
+            'legend.fontsize': 12
+        })
+
         # Plot the results
-        plt.figure(figsize=(14, 5))
+        plt.figure(figsize=(20, 7))  # Adjusted figsize to be wider for three plots in one row
 
-        plt.subplot(2, 4, 1)
-        plt.plot(t_c, np.median(Ca_dat, axis=1), "r-", lw=3)
-        plt.gca().fill_between(t_c, np.min(Ca_dat, axis=1), np.max(Ca_dat, axis=1), color="r", alpha=0.2)
-        plt.ylabel("A (mol/m^3)")
-        plt.xlabel("Time (min)")
-        plt.legend(["Concentration of A in CSTR"], loc="best")
+        # Commenting out unnecessary subplots
+        # plt.subplot(2, 4, 1)
+        # plt.plot(t_c, np.median(Ca_dat, axis=1), "r-", lw=3)
+        # plt.gca().fill_between(t_c, np.min(Ca_dat, axis=1), np.max(Ca_dat, axis=1), color="r", alpha=0.2)
+        # plt.ylabel("A [mol m$^{-3}$]")
+        # plt.xlabel("Time [min]")
+        # plt.legend(["Concentration of A in CSTR"], loc="best")
 
-        plt.subplot(2, 4, 2)
-        plt.plot(t_c, np.median(Cb_dat, axis=1), "g-", lw=3)
-        plt.gca().fill_between(t_c, np.min(Cb_dat, axis=1), np.max(Cb_dat, axis=1), color="g", alpha=0.2)
-        plt.plot(t_c, Cb_des, "--", lw=2)
-        plt.ylabel("B (mol/m^3)")
-        plt.xlabel("Time (min)")
-        plt.legend(["Concentration of B in CSTR"], loc="best")
+        # plt.subplot(2, 4, 2)
+        # plt.plot(t_c, np.median(Cb_dat, axis=1), "g-", lw=3)
+        # plt.gca().fill_between(t_c, np.min(Cb_dat, axis=1), np.max(Cb_dat, axis=1), color="g", alpha=0.2)
+        # plt.plot(t_c, Cb_des, "--", lw=2)
+        # plt.ylabel("B [mol m$^{-3}$]")
+        # plt.xlabel("Time [min]")
+        # plt.legend(["Concentration of B in CSTR"], loc="best")
 
-        plt.subplot(2, 4, 3)
-        plt.plot(t_c, np.median(Cc_dat, axis=1), lw=3)
-        plt.gca().fill_between(t_c, np.min(Cc_dat, axis=1), np.max(Cc_dat, axis=1), alpha=0.2)
-        plt.ylabel("C (mol/m^3)")
-        plt.xlabel("Time (min)")
-        plt.legend(["Concentration of C in CSTR"], loc="best")
+        # plt.subplot(2, 4, 3)
+        # plt.plot(t_c, np.median(Cc_dat, axis=1), lw=3)
+        # plt.gca().fill_between(t_c, np.min(Cc_dat, axis=1), np.max(Cc_dat, axis=1), alpha=0.2)
+        # plt.ylabel("C [mol m$^{-3}$]")
+        # plt.xlabel("Time [min]")
+        # plt.legend(["Concentration of C in CSTR"], loc="best")
 
-        plt.subplot(2, 4, 4)
+        plt.subplot(1, 3, 1)  # Adjusted for 3 plots in one row
         plt.plot(t_c, np.median(T_dat, axis=1), "c-", lw=3)
         plt.gca().fill_between(t_c, np.min(T_dat, axis=1), np.max(T_dat, axis=1), color="c", alpha=0.2)
         plt.plot(t_c, T_des, "--", lw=2)
-        plt.ylabel("Temp (K)")
-        plt.xlabel("Time (min)")
+        plt.ylabel("Temperature [K]")
+        plt.xlabel("Time [min]")
         plt.legend(["Temperature in CSTR"], loc="best")
 
-        plt.subplot(2, 4, 5)
-        plt.plot(t_c, np.median(V_dat, axis=1), "m-", lw=3)
-        plt.gca().fill_between(t_c, np.min(V_dat, axis=1), np.max(V_dat, axis=1), color="m", alpha=0.2)
-        plt.ylabel("V (L)")
-        plt.xlabel("Time (min)")
-        plt.legend(["Volume in CSTR"], loc="best")
+        # plt.subplot(2, 4, 5)
+        # plt.plot(t_c, np.median(V_dat, axis=1), "m-", lw=3)
+        # plt.gca().fill_between(t_c, np.min(V_dat, axis=1), np.max(V_dat, axis=1), color="m", alpha=0.2)
+        # plt.ylabel("V [L]")
+        # plt.xlabel("Time [min]")
+        # plt.legend(["Volume in CSTR"], loc="best")
 
-        plt.subplot(2, 4, 6)
+        plt.subplot(1, 3, 2)  # Adjusted for 3 plots in one row
         plt.plot(t_c[:-1], np.median(Fin_dat, axis=1), lw=3)
         plt.gca().fill_between(t_c[:-1], np.min(Fin_dat, axis=1), np.max(Fin_dat, axis=1), alpha=0.2)
-        plt.ylabel("Fin (L/min)")
-        plt.xlabel("Time (min)")
+        plt.ylabel("Fin [L min$^{-1}$]")
+        plt.xlabel("Time [min]")
         plt.legend(["Flow rate into CSTR"], loc="best")
 
-        plt.subplot(2, 4, 7)
+        plt.subplot(1, 3, 3)  # Adjusted for 3 plots in one row
         plt.plot(t_c[:-1], np.median(Tc_dat, axis=1), "k", lw=3)
         plt.gca().fill_between(t_c[:-1], np.min(Tc_dat, axis=1), np.max(Tc_dat, axis=1), color="k", alpha=0.2)
-        plt.ylabel("Tc (K)")
-        plt.xlabel("Time (min)")
+        plt.ylabel("Tc [K]")
+        plt.xlabel("Time [min]")
         plt.legend(["Cooling Temperature"], loc="best")
 
-        plt.subplot(2, 4, 8)
-        plt.plot(t_c[:-1], np.median(error_dat, axis=1), "y-", lw=3)
-        plt.gca().fill_between(t_c[:-1], np.min(error_dat, axis=1), np.max(error_dat, axis=1), color="y", alpha=0.2)
-        plt.ylabel("Tracking Error")
-        plt.xlabel("Time (min)")
-        plt.legend(["Error"], loc="best")
+        # plt.subplot(2, 4, 8)
+        # plt.plot(t_c[:-1], np.median(error_dat, axis=1), "y-", lw=3)
+        # plt.gca().fill_between(t_c[:-1], np.min(error_dat, axis=1), np.max(error_dat, axis=1), color="y", alpha=0.2)
+        # plt.ylabel("Tracking Error")
+        # plt.xlabel("Time [min]")
+        # plt.legend(["Error"], loc="best")
 
         plt.tight_layout()
         plt.show()
@@ -311,7 +331,7 @@ class CSTRSimulation:
             "u_cha_dat": u_cha_dat,
         }
 
-        return self.results
+        #return self.results
     
     def cstr_ss(self, x, t, u1, u2):
         # ==  Inputs (2) == #
@@ -406,7 +426,6 @@ class CSTRSimulation:
         KdVF = Ks[30]
         KF = Ks[31]
 
-        #print(Ks)
         # setpoint error
         e = x_setpoint - x
 
@@ -431,7 +450,6 @@ class CSTRSimulation:
         u_F += KpTF * e[4] + KiTF * sum(e_history[:, 4]) + KdTF * (e[4] - e_history[-1, 4])
         u_F += KF
         u_F =  min(max(u_F,  self.data_res['Fin_lb']), self.data_res['Fin_ub'])
-        #print(u_T, u_F)
         return u_T, u_F
     
     def J_ControlCSTR(self, Ks, full_output=False):
@@ -459,6 +477,7 @@ class CSTRSimulation:
         # initiate
         x = x0
         e_history = []
+
         # main loop
         for i in range(len(t_c) - 1):
             # delta t
@@ -467,8 +486,7 @@ class CSTRSimulation:
             x_sp = np.array([x0[0], Cb_des[i], x0[2], T_des[i], x0[4]])
             # compute control
             if i == 0:
-                Tc[i], Fin[i] = self.PID(Ks, x, x_sp, np.array([[x0[0], Tc_lb, x0[2], Fin_lb, x0[4]]])
-                )
+                Tc[i], Fin[i] = self.PID(Ks, x, x_sp, np.array([[x0[0], Tc_lb, x0[2], Fin_lb, x0[4]]]))
             else:
                 Tc[i], Fin[i] = self.PID(Ks, x, x_sp, np.array(e_history))
             # simulate reactor
@@ -489,9 +507,12 @@ class CSTRSimulation:
             # compute tracking error
             e_history.append(x_sp - x)
 
+        self.add_data_point(t_c, T, Tc)
+
         # == objective == #
         # production
-        error = np.abs(np.array(e_history)[:, 1])  # +np.abs(np.array(e_history)[:,1])/10
+        error = np.abs(np.array(e_history)[:, 3])
+
         # penalize magnitude of control action
         u_mag = (Tc - Tc_lb) / (12) + (Fin - Fin_lb) / (8)
         u_mag = u_mag / 50
@@ -499,7 +520,8 @@ class CSTRSimulation:
         u_cha = (Tc[1:] - Tc[0:-1]) ** 2 / (12) ** 2 + (Fin[1:] - Fin[0:-1]) ** 2 / (8) ** 2
         u_cha = u_cha / 50
 
-        if False:#full_output:
+        # store current step data in nested dictionary
+        if full_output:
             # == outputs == #
             return t_c, Ca, Cb, Cc, T, V, Tc, Fin, error, u_mag, u_cha
         else:
@@ -510,9 +532,51 @@ class CSTRSimulation:
             return error + u_cha  # + u_mag
         
 
-## Example Use
-# iter_tot = 40
+    def training_plot(self):
+        # Setting up data for plotitng
+        T_des = self.data_res["T_des"]
+        temp_trajectories = self.traj_pid['T']
+        tc_trajectories = self.traj_pid['Tc']
+        time_span = self.traj_pid['t_c'][0]
+
+        # Calculate alpha values using a cubic function
+        alpha_values = ((np.arange(len(temp_trajectories)) / len(temp_trajectories))**2)
+
+        plt.figure(figsize=(10, 12))
+
+        # First subplot for temperature trajectories
+        plt.subplot(2, 1, 1)
+        for idx, trajectory in enumerate(temp_trajectories):
+            alpha = alpha_values[idx]
+            plt.plot(time_span, trajectory, color='blue', lw=1.5, alpha=alpha)
+        plt.step(time_span, T_des, '--', lw=1.5, color='black')
+        plt.ylabel('T (K)')
+        plt.xlabel('Time (min)')
+        plt.legend(['Reactor Temperature'], loc='upper right')#, frameon=False)
+        plt.ylim([317, 335])
+        plt.xlim([0, 30])
+        plt.grid(True)
+
+        # Second subplot for Tc trajectories
+        plt.subplot(2, 1, 2)
+        for idx, trajectory in enumerate(tc_trajectories):
+            alpha = alpha_values[idx]
+            plt.plot(time_span[:-1], trajectory, color='cyan', lw=1.5, alpha=alpha)
+
+        plt.xlim([0, 30])
+        plt.ylabel('Tc (K)')
+        plt.xlabel('Time (min)')
+        plt.legend(['Coolant Temperature'], loc='upper right')#, frameon=False)
+        plt.grid(True)
+
+        # Adjust layout to prevent overlap
+        plt.tight_layout()
+        plt.show()
+
+# # Example Use
+# iter_tot = 100
 # CSTR = CSTRSimulation()
-# Kpowell, f_opt = opt_alg(CSTR.J_ControlCSTR, int(32), CSTR.boundsK, iter_tot)
+# Kpowell, f_opt, team_names, cids = opt_Powell(CSTR.J_ControlCSTR, int(32), CSTR.boundsK, iter_tot)
 # print("Ks = ", Kpowell)
 # CSTR.plot_result_ct(Kpowell)
+# CSTR.training_plot()
