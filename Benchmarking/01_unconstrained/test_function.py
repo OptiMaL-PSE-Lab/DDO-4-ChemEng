@@ -23,6 +23,8 @@ class Test_function:
         # initialize lists
         self.f_list = []
         self.x_list = []
+        self.traj_pid = {'T':[], 'Tc':[], 't_c':[]}
+
         # function specifications
         self.func_type = func_type
         self.n_x = n_x
@@ -405,13 +407,16 @@ class Test_function:
             CSTR_PID_instance = CSTRSimulation()
             z = CSTR_PID_instance.J_ControlCSTR(x)
 
+            self.traj_pid['T'].append(CSTR_PID_instance.traj_pid['T'])
+            self.traj_pid['Tc'].append(CSTR_PID_instance.traj_pid['Tc'])
+            self.traj_pid['t_c'].append(CSTR_PID_instance.traj_pid['t_c'])
 
             # track f
             self.f_list.append(z)
             if self.track_x:
                 self.x_list.append(x)
 
-            # return objective
+# return objective
             return z
 
     ####################

@@ -128,6 +128,7 @@ def ML4CE_uncon_eval(
             trajectories[dim_S][i_function]['all 10']    = {}
             trajectories[dim_S][i_function]['f_list']    = {}
             trajectories[dim_S][i_function]['x_list']    = {}
+            trajectories[dim_S][i_function]['PID_traj']  = {}
             all_f_                                       = []
             randShift_l                                  = np.random.uniform(-3,3, (reps,N_x_))
 
@@ -144,7 +145,8 @@ def ML4CE_uncon_eval(
                 trajectories[dim_S][i_function][str(i_algorithm.__name__)] = []
                 trajectories[dim_S][i_function]['f_list'][str(i_algorithm.__name__)] = []
                 trajectories[dim_S][i_function]['x_list'][str(i_algorithm.__name__)] = []
-                
+                trajectories[dim_S][i_function]['PID_traj'][str(i_algorithm.__name__)] = []
+
                 ###############
                 # Repetitions #
                 ###############
@@ -163,6 +165,10 @@ def ML4CE_uncon_eval(
                     trajectories[dim_S][i_function][str(i_algorithm.__name__)].append(copy.deepcopy(t_.best_f_c))
                     trajectories[dim_S][i_function]['f_list'][str(i_algorithm.__name__)].append(copy.deepcopy(t_.f_list))
                     trajectories[dim_S][i_function]['x_list'][str(i_algorithm.__name__)].append(copy.deepcopy(t_.x_list))
+                    # save trajectories for cstr_pid
+                    if i_function == "cstr_pid_f":
+                        trajectories[dim_S][i_function]['PID_traj'][str(i_algorithm.__name__)].append(copy.deepcopy(t_.traj_pid))
+
                     # safe data in an overwriting fashion
                     if SafeData == True: save_dict(home_dir, trajectories, timestamp)
                 # statistics from each algorithm for a function    
