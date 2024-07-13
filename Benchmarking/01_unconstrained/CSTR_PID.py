@@ -12,7 +12,7 @@ import pickle
 class CSTRSimulation:
     def __init__(self, repetitions=1):
         self.repetitions = repetitions
-        self.traj_pid = {'t_c': [], 'T': [], 'Tc': []}
+        self.traj_pid = {'t_c': [], 'T': [], 'Tc': [], 'Fin':[]}
 
         # Initial conditions for the states
         x0 = np.zeros(5)
@@ -131,10 +131,11 @@ class CSTRSimulation:
         self.data_res["Fin_ct"] = copy.deepcopy(Fin)
         self.data_res["T_ct"] = copy.deepcopy(T)
 
-    def add_data_point(self, t_c, T, Tc):
+    def add_data_point(self, t_c, T, Tc, Fin):
         self.traj_pid['t_c'].append(t_c)
         self.traj_pid['T'].append(T)
         self.traj_pid['Tc'].append(Tc)
+        self.traj_pid['Fin'].append(Fin)
 
 
     def cstr(self, x, t, Tc, Fin):
@@ -507,7 +508,7 @@ class CSTRSimulation:
             # compute tracking error
             e_history.append(x_sp - x)
 
-        self.add_data_point(t_c, T, Tc)
+        self.add_data_point(t_c, T, Tc, Fin)
 
         # == objective == #
         # production
