@@ -535,7 +535,7 @@ def ML4CE_con_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, timest
             plt.ylabel('obj value', fontsize = '28', fontname='Times New Roman')
             plt.xlabel('iterations', fontsize = '28', fontname='Times New Roman')
             # plt.yscale('log')
-            plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24})
+            plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24}, frameon=False)
             plt.tick_params(axis='x', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of x ticks
             plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
             # plt.title(funcs_test[i_fun] + ' ' + dim_S + ' convergence plot')
@@ -613,7 +613,7 @@ def ML4CE_con_graph_abs_g(test_res, algs_test, funcs_test, N_x_l, home_dir, time
             plt.ylabel('constraint value', fontsize = '28', fontname='Times New Roman')
             plt.xlabel('iterations', fontsize = '28', fontname='Times New Roman')
             # plt.yscale('log')
-            plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24})
+            plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24}, frameon=False)
             plt.tick_params(axis='x', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of x ticks
             plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
             # plt.title(funcs_test[i_fun] + ' ' + dim_S + ' convergence plot')
@@ -869,7 +869,7 @@ def ML4CE_con_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_orig
             plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
 
         # Add legend
-        plt.legend(fontsize=24)
+        plt.legend(fontsize=24, frameon=False)
 
         # Data Saving
         if SafeFig == True:

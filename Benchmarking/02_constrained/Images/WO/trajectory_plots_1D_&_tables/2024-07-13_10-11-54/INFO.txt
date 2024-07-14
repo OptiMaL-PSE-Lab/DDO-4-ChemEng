@@ -1,0 +1,1 @@
+This is the run where we reduced the number of starting points for the BO to 4 (5 including the global starting point) and we're starting the benchmarking after 10 iterations. The total number of iterations is still 20.

@@ -1,0 +1,1 @@
+This is the first run for the WO case study, where I do all 10 repetitions. We decided to not do the plotting of the constraints, therefore I modified the evaluation function to not include this for WO
