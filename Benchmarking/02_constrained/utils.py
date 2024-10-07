@@ -5,6 +5,7 @@ import os
 import pickle
 from datetime import datetime
 import statistics
+from tqdm import tqdm
 
 #########################################
 ####### Starting point generator ########
@@ -84,7 +85,31 @@ def save_dict(target_folder, data_dict, timestamp):
     with open(file_path, 'wb') as f:
         pickle.dump(data_dict, f)
 
+##########################################
+######### DICTIONARY MANIPULATION ########
+##########################################
+def pop_keys(d, key_pop):
+    if not isinstance(d, dict):
+        return d
+    
+    # Collect keys to pop to avoid dictionary size change during iteration
+    keys_to_pop = [key for key in d if key == key_pop]
+    
+    for key in keys_to_pop:
+        d.pop(key)
+    
+    # Recursively call the function for any nested dictionaries
+    for key, value in d.items():
+        if isinstance(value, dict):
+            pop_keys(value, key_pop)
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    pop_keys(item, key_pop)
 
+##########################################
+############ BENCHMARKING ################
+##########################################
 def ML4CE_con_eval(
         N_x_l, 
         f_eval_l,
@@ -157,7 +182,7 @@ def ML4CE_con_eval(
                 ###############
                 # Repetitions #
                 ###############
-                for i_rep in range(reps):
+                for i_rep in tqdm(range(reps)):
                     # random shift
                     x_shift_ = randShift_l[i_rep,:].reshape((N_x_,1))
                     # test function
@@ -177,7 +202,7 @@ def ML4CE_con_eval(
                     else: X_all = X_all_pre
                     X_all = np.array(X_all)
                     # capture constraint handling
-                    trajectories[dim_S][i_function]['vio_g_values'][str(i_algorithm.__name__)].append([-t_.con_test(x) for x in X_all])
+                    if i_function is not 'WO_f': trajectories[dim_S][i_function]['vio_g_values'][str(i_algorithm.__name__)].append([-t_.con_test(x) for x in X_all])
                     # re-test for feasibility
                     f_feas = Test_function(i_function, N_x_, True)
                     if i_function == 'WO_f':
@@ -198,19 +223,20 @@ def ML4CE_con_eval(
                     if SafeData == True: save_dict(home_dir, trajectories, timestamp)
                 # statistics from each algorithm for a function    
                 l_   = np.array(trajectories[dim_S][i_function][str(i_algorithm.__name__)])
-                l_g_ = np.array(trajectories[dim_S][i_function]['vio_g_values'][str(i_algorithm.__name__)]).reshape(l_.shape)
                 m_   = np.mean(l_, axis=0)
-                m_g_  = np.mean(l_g_, axis=0)
                 q10_ = np.quantile(l_, 0.10, axis=0)
-                q10_g_ = np.quantile(l_g_, 0.10, axis=0)
                 q90_ = np.quantile(l_, 0.90, axis=0)
-                q90_g_ = np.quantile(l_g_, 0.90, axis=0)
                 trajectories[dim_S][i_function]['all means'][str(i_algorithm.__name__)] = copy.deepcopy(m_)
-                trajectories[dim_S][i_function]['all means g'][str(i_algorithm.__name__)] = copy.deepcopy(m_g_)
                 trajectories[dim_S][i_function]['all 90'][str(i_algorithm.__name__)]    = copy.deepcopy(q10_)
                 trajectories[dim_S][i_function]['all 10'][str(i_algorithm.__name__)]    = copy.deepcopy(q90_)
-                trajectories[dim_S][i_function]['all 90 g'][str(i_algorithm.__name__)]    = copy.deepcopy(q10_g_)
-                trajectories[dim_S][i_function]['all 10 g'][str(i_algorithm.__name__)]    = copy.deepcopy(q90_g_)
+                if i_function is not 'WO_f': 
+                    l_g_ = np.array(trajectories[dim_S][i_function]['vio_g_values'][str(i_algorithm.__name__)]).reshape(l_.shape)
+                    m_g_  = np.mean(l_g_, axis=0)
+                    q10_g_ = np.quantile(l_g_, 0.10, axis=0)
+                    q90_g_ = np.quantile(l_g_, 0.90, axis=0)
+                    trajectories[dim_S][i_function]['all means g'][str(i_algorithm.__name__)] = copy.deepcopy(m_g_)
+                    trajectories[dim_S][i_function]['all 90 g'][str(i_algorithm.__name__)]    = copy.deepcopy(q10_g_)
+                    trajectories[dim_S][i_function]['all 10 g'][str(i_algorithm.__name__)]    = copy.deepcopy(q90_g_)
                 all_f_.append(copy.deepcopy(l_))
                 info.append({'alg_name': str(i_algorithm.__name__), 'team names': team_names, 'CIDs': cids})
                 # safe data in an overwriting fashion
@@ -243,6 +269,8 @@ def ML4CE_con_table(
         funcs_test,
         N_x_l,
         ):
+    
+    start_ = 10
 
     '''
     This function calculates the test results based on the trajectories and puts them in a format ready to be plotted in tables
@@ -280,8 +308,12 @@ def ML4CE_con_table(
                 # score performance
                 # since we're providing starting points to the algorithms we can use the entire trajectory 
                 # instead of cutting the inital evaluations out as we do in the unconstrained benchmarking
-                perf_ = ( (higall_[:] - trial_[:])
-                        /(higall_[:] - lowall_[:]) ) 
+                # perf_ = ( (higall_[:] - trial_[:])
+                #         /(higall_[:] - lowall_[:]) ) 
+                # perf_ = ( (higall_[start_[i_dim]:] - trial_[start_[i_dim]:])
+                #         /(higall_[start_[i_dim]:] - lowall_[start_[i_dim]:]) )
+                perf_ = ( (higall_[start_:] - trial_[start_:])
+                        /(higall_[start_:] - lowall_[start_:]) )
                 alg_perf[dim_S][str(i_alg.__name__)][funcs_test[i_fun]] = copy.deepcopy(np.sum(perf_)/len(perf_))
 
     cell_text_global = []
@@ -503,7 +535,7 @@ def ML4CE_con_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, timest
             plt.ylabel('obj value', fontsize = '28', fontname='Times New Roman')
             plt.xlabel('iterations', fontsize = '28', fontname='Times New Roman')
             # plt.yscale('log')
-            plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24})
+            plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24}, frameon=False)
             plt.tick_params(axis='x', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of x ticks
             plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
             # plt.title(funcs_test[i_fun] + ' ' + dim_S + ' convergence plot')
@@ -581,7 +613,7 @@ def ML4CE_con_graph_abs_g(test_res, algs_test, funcs_test, N_x_l, home_dir, time
             plt.ylabel('constraint value', fontsize = '28', fontname='Times New Roman')
             plt.xlabel('iterations', fontsize = '28', fontname='Times New Roman')
             # plt.yscale('log')
-            plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24})
+            plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24}, frameon=False)
             plt.tick_params(axis='x', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of x ticks
             plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
             # plt.title(funcs_test[i_fun] + ' ' + dim_S + ' convergence plot')
@@ -837,7 +869,7 @@ def ML4CE_con_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_orig
             plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
 
         # Add legend
-        plt.legend(fontsize=24)
+        plt.legend(fontsize=24, frameon=False)
 
         # Data Saving
         if SafeFig == True:

@@ -637,7 +637,7 @@ def CBO_opt(
     '''
 # comment 1233
     test_fun = f.fun_test
-    n = 9 # no of initial points to build model besides starting point.
+    n = 4 # no of initial points to build model besides starting point.
 
     if f.func_type == 'WO_f': 
         test_con = [f.WO_con1_test, f.WO_con2_test]
@@ -709,7 +709,7 @@ def CBO_TR_opt(
     '''
 
     test_fun = f.fun_test
-    n = 9 # no of initial points to build model besides starting point.
+    n = 4 # no of initial points to build model besides starting point.
     
     if f.func_type == 'WO_f': 
         test_con = [f.WO_con1_test, f.WO_con2_test]

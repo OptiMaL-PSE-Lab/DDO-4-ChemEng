@@ -1,0 +1,1 @@
+This is the run where we rduced the starting points for BO to 4 (meaning 5 including the starting point) and start benchmarking after 10 iterations in total. The overall budget is still 20. We're doing 2 dimensions only

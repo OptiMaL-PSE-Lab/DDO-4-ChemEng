@@ -1,0 +1,1 @@
+This run did not produce the plots we wanted yet. There were some changes made in the cstr class and in the subsequent run we hope to see the results we're looking for.

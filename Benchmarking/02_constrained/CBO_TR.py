@@ -421,7 +421,6 @@ class ITR_GP_RTO:
 
         # --- compute rho --- #
         plant_i     = obj_system(np.array(xk).flatten())
-        print('here is double counting, in google colab there is a better version')
         plant_iplus = obj_system(np.array(xnew).flatten())
         rho         = (plant_i - plant_iplus)/( (GP_obj.GP_inference_np(np.array(xk).flatten())[0]) -
                                                (GP_obj.GP_inference_np(np.array(xnew).flatten())[0]) )

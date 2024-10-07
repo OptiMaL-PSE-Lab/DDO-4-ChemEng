@@ -1,0 +1,2 @@
+This is the first (and hopefully only) run that I perform with the "all g mean" etc. saved in the trajectory. This is important to make sure the 1D constraint plots can be produced.
+Later we decided to kick BO-trust region so this is a modified folder without this algorithm

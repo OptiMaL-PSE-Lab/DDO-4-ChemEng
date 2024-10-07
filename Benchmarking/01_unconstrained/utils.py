@@ -379,7 +379,7 @@ def ML4CE_uncon_table_plot(array, functions_test, algorithms_test, N_x_l, home_d
             plt.title(algorithms_test[i].__name__)
             plt.show()
                 
-
+from matplotlib.lines import Line2D
 def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, timestamp, SafeFig=False):
 
     colors = plt.cm.tab10(np.linspace(0, 1, len(algs_test)))
@@ -391,7 +391,7 @@ def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, time
     for i_dim in range(len(N_x_l)):
         dim_S = 'D' + str(N_x_l[i_dim])
         for i_fun in range(n_f):
-            plt.figure(figsize=(15, 15))
+            plt.figure(figsize=(15, 5))
             for i_alg in algs_test:
                 trial_ = test_res[dim_S][funcs_test[i_fun]]['all means'][str(i_alg.__name__)]
                 up_     = test_res[dim_S][funcs_test[i_fun]]['all 90'][str(i_alg.__name__)]
@@ -416,7 +416,7 @@ def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, time
 
                 # Add the vertical line if a valid position is calculated
                 if vline_pos is not None:
-                    plt.axvline(x=vline_pos, color='red', linestyle='--', linewidth=2)
+                    plt.axvline(x=vline_pos, color='black', linestyle='--', linewidth=2)
 
                 # Setting x-axis ticks to integer values starting from 0 and showing every 5th tick
                 tick_positions = np.arange(0, len(down_), 5)
@@ -428,12 +428,36 @@ def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, time
 
                 plt.xticks(tick_positions, tick_labels, fontsize=24, fontname='Times New Roman')
 
-            plt.ylabel('obj value', fontsize = '28', fontname='Times New Roman')
-            plt.xlabel('iterations', fontsize = '28', fontname='Times New Roman')
+            legend_handles = []
+            legend_cust = [
+                'LSQM',
+                'SNOBFIT',
+                'SRBF',
+                'DYCORS',
+                'SOP',
+                'COBYLA',
+                'COBYQA',
+                'CUATRO',
+                'BO',
+                'ENTMOOT',
+            ]
+            for alg, label in zip(algs_test, legend_cust):
+                alg_index = alg_indices[alg]
+                color = colors[alg_index]
+                line_style = line_styles[alg_index % len(line_styles)]
+                handle = Line2D([0], [0], color=color, linestyle=line_style, lw=3, label=label)
+                legend_handles.append(handle)
+                
+            fontsize = "16"
+            labelsize = "12"
+
+            plt.ylabel('objective function value', fontsize = fontsize, fontname='Times New Roman')
+            plt.xlabel('iterations', fontsize = fontsize, fontname='Times New Roman')
             # plt.yscale('log')
-            plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24})
-            plt.tick_params(axis='x', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of x ticks
-            plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
+            # plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24}, frameon=False)
+            plt.legend(handles=legend_handles ,loc='best', prop={'family':'Times New Roman', 'size': labelsize}, frameon=False)
+            plt.tick_params(axis='x', labelsize=labelsize, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of x ticks
+            plt.tick_params(axis='y', labelsize=labelsize, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
             # plt.title(funcs_test[i_fun] + ' ' + dim_S + ' convergence plot')
             # grid(True)
         
@@ -447,11 +471,11 @@ def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, time
                 directory_name = os.path.join(home_dir, timestamp, 'trajectory_plots_1D')
                 if directory_exists(directory_name):
 
-                    plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]))
+                    plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]), bbox_inches='tight')
                 else:
                     print(f"The directory '{directory_name}' does not exist in the root directory.")
                     os.mkdir(directory_name)
-                    plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]))
+                    plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]), bbox_inches='tight')
 
 
 
@@ -531,7 +555,7 @@ def ML4CE_uncon_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_or
             plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
 
         # Add legend
-        plt.legend(fontsize=24)
+        plt.legend(fontsize=24, frameon=False)
 
         if SafeFig == True:
 
