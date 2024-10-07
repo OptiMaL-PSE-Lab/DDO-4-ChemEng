@@ -23,7 +23,7 @@ class Test_function:
         # initialize lists
         self.f_list = []
         self.x_list = []
-        self.traj_pid = {'T':[], 'Tc':[], 't_c':[]}
+        self.traj_pid = {'T':[], 'Tc':[], 't_c':[], 'Fin':[]}
 
         # function specifications
         self.func_type = func_type
@@ -572,6 +572,7 @@ class Test_function:
             self.traj_pid['T'].append(CSTR_PID_instance.traj_pid['T'])
             self.traj_pid['Tc'].append(CSTR_PID_instance.traj_pid['Tc'])
             self.traj_pid['t_c'].append(CSTR_PID_instance.traj_pid['t_c'])
+            self.traj_pid['Fin'].append(CSTR_PID_instance.traj_pid['Fin'])
 
             # track f
             self.f_list.append(z)

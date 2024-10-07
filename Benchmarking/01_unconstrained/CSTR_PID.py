@@ -12,7 +12,7 @@ import pickle
 class CSTRSimulation:
     def __init__(self, repetitions=1):
         self.repetitions = repetitions
-        self.traj_pid = {'t_c': [], 'T': [], 'Tc': []}
+        self.traj_pid = {'t_c': [], 'T': [], 'Tc': [], 'Fin':[]}
 
         '''
         T is the control variable (Reactor temperature)
@@ -136,10 +136,11 @@ class CSTRSimulation:
         self.data_res["Fin_ct"] = copy.deepcopy(Fin)
         self.data_res["T_ct"] = copy.deepcopy(T)
 
-    def add_data_point(self, t_c, T, Tc):
+    def add_data_point(self, t_c, T, Tc, Fin):
         self.traj_pid['t_c'].append(t_c)
         self.traj_pid['T'].append(T)
         self.traj_pid['Tc'].append(Tc)
+        self.traj_pid['Fin'].append(Fin)
 
 
     def cstr(self, x, t, Tc, Fin):
@@ -444,9 +445,9 @@ class CSTRSimulation:
             KpCbT * e[1] + KiCbT * sum(e_history[:, 1]) + KdCbT * (e[1] - e_history[-1, 1])
         )
         u_T += KpTT * e[3] + KiTT * sum(e_history[:, 3]) + KdTT * (e[3] - e_history[-1, 3])
-        u_T += KpTT * e[0] + KiTT * sum(e_history[:, 0]) + KdTT * (e[0] - e_history[-1, 0])
-        u_T += KpTT * e[2] + KiTT * sum(e_history[:, 2]) + KdTT * (e[2] - e_history[-1, 2])
-        u_T += KpTT * e[4] + KiTT * sum(e_history[:, 4]) + KdTT * (e[4] - e_history[-1, 4])
+        u_T += KpCaT * e[0] + KiCaT * sum(e_history[:, 0]) + KdCaT * (e[0] - e_history[-1, 0])
+        u_T += KpCcT * e[2] + KiCcT * sum(e_history[:, 2]) + KdCcT * (e[2] - e_history[-1, 2])
+        u_T += KpVT * e[4] + KiVT * sum(e_history[:, 4]) + KdVT * (e[4] - e_history[-1, 4])
         u_T += KT
         u_T = min(max(u_T, self.data_res['Tc_lb']), self.data_res['Tc_ub'])
 
@@ -455,9 +456,9 @@ class CSTRSimulation:
             KpCbF * e[0] + KiCbF * sum(e_history[:, 0]) + KdCbF * (e[1] - e_history[-1, 0])
         )
         u_F += KpTF * e[3] + KiTF * sum(e_history[:, 3]) + KdTF * (e[3] - e_history[-1, 3])
-        u_F += KpTF * e[0] + KiTF * sum(e_history[:, 0]) + KdTF * (e[0] - e_history[-1, 0])
-        u_F += KpTF * e[2] + KiTF * sum(e_history[:, 2]) + KdTF * (e[2] - e_history[-1, 2])
-        u_F += KpTF * e[4] + KiTF * sum(e_history[:, 4]) + KdTF * (e[4] - e_history[-1, 4])
+        u_F += KpCaF * e[0] + KiCaF * sum(e_history[:, 0]) + KdCaF * (e[0] - e_history[-1, 0])
+        u_F += KpCcF * e[2] + KiCcF * sum(e_history[:, 2]) + KdCcF * (e[2] - e_history[-1, 2])
+        u_F += KpVF * e[4] + KiVF * sum(e_history[:, 4]) + KdVF * (e[4] - e_history[-1, 4])
         u_F += KF
         u_F =  min(max(u_F,  self.data_res['Fin_lb']), self.data_res['Fin_ub'])
         return u_T, u_F
@@ -537,7 +538,7 @@ class CSTRSimulation:
             # compute tracking error as difference between setpoint and current values of the state variables 
             e_history.append(x_sp - x)
 
-        self.add_data_point(t_c, T, Tc)
+        self.add_data_point(t_c, T, Tc, Fin)
 
         # == objective == #
         # production
