@@ -25,6 +25,31 @@ from pylab import grid
 import pickle
 from tqdm import tqdm
 
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
+import copy
+# importing algorithms
+from Stochastic_local_search import*
+from Cuadratic_opt_v2 import *
+from Scipy_opt_algs import*
+from BO_NpScpy import*
+# importing test functions
+from test_function import*
+from utils import *
+from COBYQA import *
+from ScikitQuant_opt_algs import *
+from pySOT_opt_algs import *
+from CUATRO import *
+from ENTMOOT import *
+from matplotlib.lines import Line2D
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.lines import Line2D
+from matplotlib.font_manager import FontProperties
+import matplotlib.colors as mcolors
+
 '''
 how do the algorithms deal with start-data?
 
@@ -379,10 +404,31 @@ def ML4CE_uncon_table_plot(array, functions_test, algorithms_test, N_x_l, home_d
             plt.title(algorithms_test[i].__name__)
             plt.show()
                 
-from matplotlib.lines import Line2D
+
 def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, timestamp, SafeFig=False):
 
-    colors = plt.cm.tab10(np.linspace(0, 1, len(algs_test)))
+    # Set the font properties globally
+    plt.rcParams.update({
+        'text.usetex': True,
+        'font.size': 28,
+        'font.family': 'lmr',
+        'xtick.labelsize': 26,
+        'ytick.labelsize': 26,
+    })
+
+    # Use a different color map
+    colors = plt.cm.tab10(np.linspace(0, 1, len(algs_test)))  # Change to 'viridis' color map
+    # colors = [
+    #     '#1A73B2',
+    #     '#D62627', 
+    #     '#E476C2',
+    #     '#0BBBCD', 
+    #     'grey',
+    #     '#1A73B2',
+    #     '#D62627', 
+    #     '#E476C2',
+    #     '#0BBBCD', 
+    #     'grey',]
     line_styles = ['-', '--', '-.', ':']  
     alg_indices = {alg: i for i, alg in enumerate(algs_test)}
 
@@ -391,75 +437,108 @@ def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, time
     for i_dim in range(len(N_x_l)):
         dim_S = 'D' + str(N_x_l[i_dim])
         for i_fun in range(n_f):
-            plt.figure(figsize=(15, 5))
+            if funcs_test[i_fun] == 'cstr_pid_f': 
+                fig, ax = plt.subplots(figsize=(18, 12))
+            else:
+                fig, ax = plt.subplots(figsize=(15, 15))
+            # plt.figure(figsize=(15, 15))
             for i_alg in algs_test:
                 trial_ = test_res[dim_S][funcs_test[i_fun]]['all means'][str(i_alg.__name__)]
                 up_     = test_res[dim_S][funcs_test[i_fun]]['all 90'][str(i_alg.__name__)]
                 down_   = test_res[dim_S][funcs_test[i_fun]]['all 10'][str(i_alg.__name__)]
                 alg_index = alg_indices[i_alg]  # Get the index of the algorithm
                 color = colors[alg_index]
-                line_style = line_styles[alg_index % len(line_styles)]  # Use modulo to cycle through line styles
-                plt.plot(trial_, color=color, linestyle=line_style, lw=3, label=str(i_alg.__name__))
+                line_style = line_styles[alg_index % len(line_styles)]
+                plt.plot(trial_, color=color, linestyle=line_style, lw=4, label=str(i_alg.__name__))
                 x_ax = np.linspace(0, len(down_), len(down_), endpoint=False)
-                plt.gca().fill_between(x_ax,down_, up_, color=color, alpha=0.2)
+                plt.gca().fill_between(x_ax, down_, up_, color=color, alpha=0.2)
 
-                # Calculate the position of the vertical line based on the length of the trajectory
-                length = len(down_)
-                if length == 20:
-                    vline_pos = 5
-                elif length == 50:
-                    vline_pos = 10
-                elif length == 100:
-                    vline_pos = 15
+                # # Calculate the position of the vertical line based on the length of the trajectory
+                # length = len(down_)
+                # if length == 20:
+                #     vline_pos = 5
+                # elif length == 50:
+                #     vline_pos = 10
+                # elif length == 100:
+                #     vline_pos = 15
+                # else:
+                #     vline_pos = None  # Or set a default value if needed
+
+                # # Add the vertical line if a valid position is calculated
+                # if vline_pos is not None:
+                #     plt.axvline(x=vline_pos, color='black', linestyle='--', linewidth=2)
+
+                # Determine the tick interval based on the length of down_
+                if len(down_) < 100:
+                    interval = 5
                 else:
-                    vline_pos = None  # Or set a default value if needed
+                    interval = 10
 
-                # Add the vertical line if a valid position is calculated
-                if vline_pos is not None:
-                    plt.axvline(x=vline_pos, color='black', linestyle='--', linewidth=2)
-
-                # Setting x-axis ticks to integer values starting from 0 and showing every 5th tick
-                tick_positions = np.arange(0, len(down_), 5)
-                if (len(down_) - 1) % 5 != 0:  # If the last position is not already included
+                # Setting x-axis ticks to integer values starting from 0 and showing every interval-th tick
+                tick_positions = np.arange(0, len(down_), interval)
+                if (len(down_) - 1) % interval != 0:  # If the last position is not already included
                     tick_positions = np.append(tick_positions, len(down_) - 1)
-                tick_labels = np.arange(0, len(down_), 5)
+                tick_labels = np.arange(0, len(down_), interval)
                 if len(tick_labels) < len(tick_positions):
                     tick_labels = np.append(tick_labels, len(down_) - 1)
 
-                plt.xticks(tick_positions, tick_labels, fontsize=24, fontname='Times New Roman')
+                plt.xticks(tick_positions, tick_labels)
 
             legend_handles = []
-            legend_cust = [
-                'LSQM',
+
+            if funcs_test[i_fun] == 'cstr_pid_f':
+                legend_cust = [
                 'SNOBFIT',
                 'SRBF',
                 'DYCORS',
                 'SOP',
                 'COBYLA',
+                'TURBO',
                 'COBYQA',
                 'CUATRO',
+                'CUATRO-pls',
                 'BO',
-                'ENTMOOT',
             ]
+            else:
+                legend_cust = [
+                    'LSQM',
+                    'SNOBFIT',
+                    'SRBF',
+                    'DYCORS',
+                    'SOP',
+                    'COBYLA',
+                    'COBYQA',
+                    'CUATRO',
+                    'BO',
+                    'ENTMOOT',
+                ]
+
             for alg, label in zip(algs_test, legend_cust):
                 alg_index = alg_indices[alg]
                 color = colors[alg_index]
                 line_style = line_styles[alg_index % len(line_styles)]
-                handle = Line2D([0], [0], color=color, linestyle=line_style, lw=3, label=label)
+                handle = Line2D([0], [0], color=color, linestyle=line_style, lw=4, label=label)
                 legend_handles.append(handle)
-                
-            fontsize = "16"
-            labelsize = "12"
 
-            plt.ylabel('objective function value', fontsize = fontsize, fontname='Times New Roman')
-            plt.xlabel('iterations', fontsize = fontsize, fontname='Times New Roman')
-            # plt.yscale('log')
-            # plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24}, frameon=False)
-            plt.legend(handles=legend_handles ,loc='best', prop={'family':'Times New Roman', 'size': labelsize}, frameon=False)
-            plt.tick_params(axis='x', labelsize=labelsize, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of x ticks
-            plt.tick_params(axis='y', labelsize=labelsize, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
-            # plt.title(funcs_test[i_fun] + ' ' + dim_S + ' convergence plot')
-            # grid(True)
+            plt.ylabel('Objective Function Value')
+            plt.xlabel('Iterations')
+            plt.yscale('log')
+            if funcs_test[i_fun] == 'Rosenbrock_f' or funcs_test[i_fun] == 'Levy_f' and dim_S == 'D5':
+                legend1 = plt.legend(handles=legend_handles[:5], loc='lower left', frameon=False)
+                legend2 = plt.legend(handles=legend_handles[5:] ,loc='upper right', frameon=False)
+                ax.add_artist(legend1)
+                ax.add_artist(legend2)
+            elif funcs_test[i_fun] == 'cstr_pid_f': # (0.735, 0.65)
+                legend1 = plt.legend(handles=legend_handles[:5], loc=(0.4642, 0.673), frameon=False)
+                legend2 = plt.legend(handles=legend_handles[5:] ,loc=(0.71, 0.673), frameon=False)
+                ax.add_artist(legend1)
+                ax.add_artist(legend2)
+            else: 
+
+                plt.legend(handles=legend_handles ,loc='best', frameon=False)
+            plt.grid(which='major')
+            plt.grid(which='minor', alpha=0.4)
+            
         
             if SafeFig == True:
 
@@ -471,35 +550,58 @@ def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, time
                 directory_name = os.path.join(home_dir, timestamp, 'trajectory_plots_1D')
                 if directory_exists(directory_name):
 
-                    plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]), bbox_inches='tight')
+                    plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]), bbox_inches = 'tight')
+                    plt.savefig(directory_name + '/{}_{}_1D.jpg'.format(dim_S, funcs_test[i_fun]), format = 'jpg', bbox_inches = 'tight', dpi=300)
                 else:
                     print(f"The directory '{directory_name}' does not exist in the root directory.")
                     os.mkdir(directory_name)
-                    plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]), bbox_inches='tight')
+                    plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]), bbox_inches = 'tight')
+                    plt.savefig(directory_name + '/{}_{}_1D.jpg'.format(dim_S, funcs_test[i_fun]), format = 'jpg', bbox_inches = 'tight', dpi=300)
 
 
 
-import numpy as np
-import matplotlib.pyplot as plt
 
 def ML4CE_uncon_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_origin, bounds_, bounds_plot, SafeFig=False):
-    f_eval_ = 40  # trajectory length (= evaluation budget) --> Keep in mind that BO uses 10 datapoints to build the model when plotting
+    f_eval_ = 30  # trajectory length (= evaluation budget) --> Keep in mind that BO uses 10 datapoints to build the model when plotting
     track_x = True
-    colors = plt.cm.tab10(np.linspace(0, 1, len(algorithms_test)))
+
+    # Set the font properties globally
+    plt.rcParams.update({
+        'text.usetex': True,
+        'font.size': 28,
+        'font.family': 'lmr',
+        'xtick.labelsize': 26,
+        'ytick.labelsize': 26,
+    })
+
+    line_styles = ['-', '--', '-.', ':']  
+
+    # colors = plt.cm.tab10(np.linspace(0, 1, len(algorithms_test)))
+    # line_colors = ['k-','b-','g-','c-','r-']
+    # colors = ['k','b','g','c','darkviolet']
+    colors = ['#1A73B2','#D62627', '#E476C2','#0BBBCD', 'grey']
+    # colors = ['black', 'white','darkslategray', 'gold', 'deepskyblue' ]
     alg_indices = {alg: i for i, alg in enumerate(algorithms_test)}
+    fun_n = 0
 
     for fun_ in functions_test:
-        t_ = Test_function(fun_, N_x_, track_x, x_shift_origin, bounds_)
+        f_contour = Test_function(fun_, N_x_, track_x, x_shift_origin, bounds_)
 
+        ####################################
+        ### CONTOUR AND CONSTRAINT LINES ###
+        ####################################
         # evaluate grid with vmap
-        n_points = 100
-        x1lb = bounds_plot[0][0]
-        x1ub = bounds_plot[0][1]
+        n_points = 200
+        x1lb = bounds_plot[fun_n][0][0]
+        x1ub = bounds_plot[fun_n][0][1]
         x1 = np.linspace(start=x1lb, stop=x1ub, num=n_points)
-        x2lb = bounds_plot[1][0]
-        x2ub = bounds_plot[1][1]
+        x2lb = bounds_plot[fun_n][1][0]
+        x2ub = bounds_plot[fun_n][1][1]
         x2 = np.linspace(start=x2lb, stop=x2ub, num=n_points)
         X1, X2 = np.meshgrid(x1, x2)
+
+        # set function counter
+        fun_n += 1
 
         # define plot
         plt.figure(figsize=(15, 15))
@@ -509,13 +611,28 @@ def ML4CE_uncon_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_or
         y = np.empty((n_points, n_points))
 
         # Iterate over each element and apply the function
-        for i in range(n_points):
+        # drawing contours
+        print('Drawing Contours')
+        for i in tqdm(range(n_points)):
             for j in range(n_points):
-                y[i, j] = t_.fun_test(np.array([[X1[i, j], X2[i, j]]]))
+                y[i, j] = f_contour.fun_test(np.array([[X1[i, j], X2[i, j]]]))
 
-        # add objective contour
-        ax3.contour(X1, X2, y, 50)
+        #change scale (all unconstrained functions look better like this)
+        y = np.log2(y+1)
 
+        # Normalize the y values for the contour plot
+        norm = mcolors.Normalize(vmin=np.min(y), vmax=np.max(y))
+
+        # Plot the contour with normalization
+        contour = plt.contourf(X1, X2, y, levels=50, cmap='Spectral_r', norm=norm, alpha=0.5, linewidths=0.5)
+
+        # set axis
+        ax3.axis([x1lb,x1ub,x2lb,x2ub])
+
+
+        ############################
+        ### PERFORM OPTIMIZATION ###
+        ############################
         for alg_ in algorithms_test:
             print(alg_)
 
@@ -524,38 +641,82 @@ def ML4CE_uncon_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_or
             color = colors[alg_index]
 
             # initiate test function
-            f_ = Test_function(fun_, N_x_, track_x, x_shift_origin, bounds_)
+            f_plot = Test_function(fun_, N_x_, track_x, x_shift_origin, bounds_)
 
             # perform optimization
-            a, b, team_names, cids = alg_(f_, N_x_, bounds_, f_eval_, has_x0=True)
-            X_opt = np.array(f_.x_list[:f_eval_+1])  # needs to be capped because of COBYLA not respecting the budget
+            a, b, team_names, cids = alg_(f_plot, N_x_, bounds_, f_eval_, has_x0=True)
 
-            # connect best-so-far
-            best_points = []
-            best_value = float('inf')  # Initialize with a high value
+            # get an plot all evaluations
+            # X_all = np.array(f_plot.x_list[:f_eval_+1])  # needs to be capped because of COBYLA not respecting the budget
+            X_all = np.array(f_plot.x_list)
+            ax3.scatter(X_all[:,0], X_all[:,1], marker='o', color=color, alpha=0.4)
 
-            for point in X_opt:
-                y = f_.fun_test(point)
-                if y < best_value:
-                    best_value = y
-                    best_points.append(point)
+            # re-test for feasibility (taken from constrained routine)
+            f_feas = Test_function(fun_, N_x_, track_x, x_shift_origin, bounds_)
 
-            best_values_x1 = [point[0] for point in best_points]
-            best_values_x2 = [point[1] for point in best_points]
+            # all feasible since unconstrained
+            X_feas = [x for x in X_all] # needs to be adapted later when merging both utils
 
-            ax3.plot(best_values_x1, best_values_x2, marker='o', linestyle='-', color=color, label=alg_.__name__)
+            # produce function values for ranking
+            for x in X_feas: f_feas.fun_test(x)
 
-            # Add starting point to the trajectory
-            ax3.plot(X_opt[0,0,0], X_opt[0,1,0], marker='s', color='black', markersize=10)
+            # get best evaluations
+            f_feas.best_f_list()
 
-            ax3.axis([x1lb, x1ub, x2lb, x2ub])
-            plt.ylabel('X2', fontsize='28', fontname='Times New Roman')
-            plt.xlabel('X1', fontsize='28', fontname='Times New Roman')
-            plt.tick_params(axis='x', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of x ticks
-            plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
+            # get best values
+            best_values_x1 = [point[0] for point in f_feas.best_x]
+            best_values_x2 = [point[1] for point in f_feas.best_x]
 
-        # Add legend
-        plt.legend(fontsize=24, frameon=False)
+            # plot best values
+            ax3.plot(best_values_x1, best_values_x2, colors[alg_index], linewidth = 3, label=alg_.__name__, zorder=5)
+
+            # Highlight starting point 
+            ax3.plot(X_all[0,0,0], X_all[0,1,0], marker='X', color='black', markersize=15, zorder=6)
+
+            # highlight end point
+            ax3.plot(best_values_x1[-1], best_values_x2[-1], colors[alg_index], marker='H',markersize=15, zorder=10)
+
+            # set lables
+            plt.ylabel('$x_2$')
+            plt.xlabel('$x_1$')
+
+            # remove ticks
+            plt.xticks([])
+            plt.yticks([])
+
+        legend_cust_dict = {
+            'LS_QM_v2':'LSQM',
+            'opt_SRBF':'SRBF',
+            'opt_DYCORS':'DYCORS',
+            'opt_SOP':'SOP',
+            'COBYQA':'COBYQA',
+            'opt_SnobFit':'SNOBFIT',
+            'opt_COBYLA':'COBYLA',
+            'opt_CUATRO':'CUATRO',
+            'BO_np_scipy':'BO',
+            'opt_ENTMOOT':'ENTMOOT'
+        }
+
+        legend_cust = [legend_cust_dict[key.__name__] for key in algorithms_test]
+
+        # Create custom legend handles
+        legend_handles = []
+        for alg, label in zip(algorithms_test, legend_cust):
+            alg_index = alg_indices[alg]
+            color = colors[alg_index]
+            handle = Line2D([0], [0], color=color, linestyle='-', lw=3, label=label)
+            legend_handles.append(handle)
+
+        # Add a custom legend handle for the constraint, start, and end
+        # hline_handle = Line2D([0], [0], color='black', linestyle='--', lw=3, label='g(x) = 0', alpha=0.6)
+        start_handle = Line2D([0], [0], marker='X', color='black', linestyle='None', markersize=15, label='Start')
+        end_handle = Line2D([0], [0], marker='H', color='black', linestyle='None', markersize=15, label='End')
+        # legend_handles.append(hline_handle)
+        legend_handles.append(start_handle)
+        legend_handles.append(end_handle)
+
+        # Add legend with custom handles
+        plt.legend(handles=legend_handles, loc='best')
 
         if SafeFig == True:
 
@@ -566,8 +727,226 @@ def ML4CE_uncon_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_or
 
             directory_name = 'images/trajectory_plots_2D'
             if directory_exists(directory_name):
+                
+                if 'LSQM' in legend_cust:
+                    plt.savefig(directory_name + '/{}_allin1_A.png'.format(f_feas.func_type), bbox_inches='tight')
+                    plt.savefig(directory_name + '/{}_allin1_A.jpg'.format(f_feas.func_type), format = 'jpg', bbox_inches = 'tight', dpi=300)
+                else:
+                    plt.savefig(directory_name + '/{}_allin1_B.png'.format(f_feas.func_type), bbox_inches='tight')
+                    plt.savefig(directory_name + '/{}_allin1_B.jpg'.format(f_feas.func_type), format = 'jpg', bbox_inches = 'tight', dpi=300)
+            else:
+                print(f"The directory '{directory_name}' does not exist in the root directory.")
 
-                plt.savefig(directory_name + '/{}_allin1.png'.format(f_.func_type))
+            plt.close
+
+        else:
+            plt.show()
+
+import matplotlib.colors as mcolors
+def ML4CE_uncon_contour_allin1_smooth(functions_test, algorithms_test, N_x_, x_shift_origin, reps, bounds_, bounds_plot, SafeFig=False):
+    
+    # Set the font properties globally
+    plt.rcParams.update({
+        'text.usetex': True,
+        'font.size': 28,
+        'font.family': 'lmr',
+        'xtick.labelsize': 26,
+        'ytick.labelsize': 26,
+    })
+
+    # data inputs, set to 60 for good visuals
+    f_eval_ = 30 # trajectory length (= evaluation budget) --> Keep in mind that BO uses 10 datapoints to build the model when plotting
+    
+    track_x = True
+    # line_colors = ['k-','b-','g-','c-'] looks like this is not needed
+    # colors = plt.cm.tab10(np.linspace(0, 1, len(algorithms_test)))
+    '''
+    #CE7FA0 - Corallenrot
+    #FAFCD7 - Orange
+    #CDEAD1 - Gruen
+    #9AC0DC - Himmelblau
+    In combination with Greys
+    colors = ['#CE7FA0', '#FAFCD7', '#CDEAD1', '#9AC0DC']
+    '''
+    colors = ['#1A73B2','#D62627', '#E476C2','#0BBBCD', 'grey']
+    # colors = ['k','b','g','c']
+
+    alg_indices = {alg: i for i, alg in enumerate(algorithms_test)}
+    fun_n = 0
+    # perform plotting
+    for fun_ in functions_test:
+        f_contour = Test_function(fun_, N_x_, track_x, x_shift_origin, bounds_)
+
+        ####################################
+        ### CONTOUR AND CONSTRAINT LINES ###
+        ####################################
+        # evaluate grid with vmap
+        n_points = 100 # how 'round' the lines of the contour are
+        x1lb = bounds_plot[fun_n][0][0]
+        x1ub = bounds_plot[fun_n][0][1]
+        x1 = np.linspace(start=x1lb, stop=x1ub, num=n_points)
+        x2lb = bounds_plot[fun_n][1][0]
+        x2ub = bounds_plot[fun_n][1][1]
+        x2 = np.linspace(start=x2lb, stop=x2ub, num=n_points)
+        X1, X2 = np.meshgrid(x1, x2)
+
+        # set function counter
+        fun_n += 1
+
+        # define plot
+        plt.figure(figsize=(15, 15))
+        ax3 = plt.subplot()
+
+        # Initialize an empty array to store results
+        y = np.empty((n_points, n_points))
+
+        # Iterate over each element and apply the function
+        print('drawing contour')
+        for i in tqdm(range(n_points)):
+            for j in range(n_points):
+                y[i, j] = f_contour.fun_test(np.array([[X1[i, j], X2[i, j]]]).flatten())
+        
+        #change scale (all unconstrained functions look better like this)
+        y = np.log2(y+1)
+
+        # Normalize the y values for the contour plot
+        norm = mcolors.Normalize(vmin=np.min(y), vmax=np.max(y))
+
+        # Plot the contour with normalization
+        contour = plt.contourf(X1, X2, y, levels=50, cmap='Spectral_r', norm=norm, alpha=0.5, linewidths=0.5)
+
+        # set axis
+        ax3.axis([x1lb,x1ub,x2lb,x2ub])
+
+        ############################
+        ### PERFORM OPTIMIZATION ###
+        ############################
+
+        for alg_ in algorithms_test:
+
+            alg_index = alg_indices[alg_]
+            color = colors[alg_index]
+            
+            x_list  = []
+            for i_rep in range(reps):
+                # initiate test function
+                f_plot = Test_function(fun_, N_x_, track_x, x_shift_origin, bounds_)
+                # perform optimization
+                a, b, team_names, cids = alg_(f_plot, N_x_, bounds_, f_eval_, has_x0=True)
+                # make sure the lenthgs of the lists match
+                X_collect_pre = f_plot.x_list
+                X_collect = []
+                # make sure to even-out the trajectory lengths
+                if len(X_collect_pre)<f_eval_: 
+                    x_last = X_collect_pre[-1]
+                    X_collect = X_collect_pre + [x_last]*(f_eval_ - len(X_collect_pre))
+                elif len(X_collect_pre)>f_eval_:
+                    X_collect = X_collect_pre[:f_eval_] 
+                else: X_collect = X_collect_pre
+                x_list.append(X_collect)
+
+            # x_list and f_list now consist of all evaluations
+            # now we build the mean
+            X_all  = np.array(x_list)
+            X_all_m  = np.mean(X_all, axis =0).reshape((f_eval_, 2))
+                        
+            # re-test for feasibility (taken from constrained routine)
+            f_feas = Test_function(fun_, N_x_, track_x, x_shift_origin, bounds_)
+
+            # all feasible since unconstrained
+            X_feas = [x for x in X_all_m] # needs to be adapted later when merging both utils
+
+            # produce function values for ranking
+            for x in X_feas: f_feas.fun_test(x)
+
+            # get best evaluations
+            f_feas.best_f_list()
+
+            # color setting
+            alg_index = alg_indices[alg_]
+            color = colors[alg_index]
+
+            # # Find and plot unique evaluations (otherwise too crowded)
+            # # another idea would be to adjust the alpha depending on how often a position is sampled
+            # X_all_re = X_all.reshape((f_eval_*reps,2))
+            # X_all_re_unique = np.unique(X_all_re, axis=0)
+            # ax3.scatter(X_all_re_unique[:,0], X_all_re_unique[:,1], marker='o', color=color, alpha=0.5)
+            
+            # remove weird entries from CUATRO
+            if alg_.__name__ == 'opt_CUATRO': 
+
+                best_values_x1 = best_values_x1[9:]
+                best_values_x2 = best_values_x2[9:]
+            
+            # plot
+            best_values_x1 = [point[0] for point in f_feas.best_x]
+            best_values_x2 = [point[1] for point in f_feas.best_x]
+
+            # plot best values
+            ax3.plot(best_values_x1, best_values_x2, colors[alg_index], linewidth = 3, label=alg_.__name__, zorder=5)
+
+            # Highlight starting point 
+            ax3.plot(best_values_x1[0], best_values_x2[0], marker='X', color='black', markersize=15, zorder=6)
+
+            # highlight end point
+            ax3.plot(best_values_x1[-1], best_values_x2[-1], colors[alg_index], marker='H',markersize=15, zorder=10)
+            
+            # set lables
+            plt.ylabel('$x_2$')
+            plt.xlabel('$x_1$')
+
+            # remove ticks
+            plt.xticks([])
+            plt.yticks([])
+
+        legend_cust_dict = {
+            'LS_QM_v2':'LSQM',
+            'opt_SRBF':'SRBF',
+            'opt_DYCORS':'DYCORS',
+            'opt_SOP':'SOP',
+            'COBYQA':'COBYQA',
+            'opt_SnobFit':'SNOBFIT',
+            'opt_COBYLA':'COBYLA',
+            'opt_CUATRO':'CUATRO',
+            'BO_np_scipy':'BO',
+            'opt_ENTMOOT':'ENTMOOT'
+        }
+
+        legend_cust = [legend_cust_dict[key.__name__] for key in algorithms_test]
+
+        # Create custom legend handles
+        legend_handles = []
+        for alg, label in zip(algorithms_test, legend_cust):
+            alg_index = alg_indices[alg]
+            color = colors[alg_index]
+            handle = Line2D([0], [0], color=color, linestyle='-', lw=3, label=label)
+            legend_handles.append(handle)
+
+        # Add a custom legend handle for the constraint, start, and end
+        start_handle = Line2D([0], [0], marker='X', color='black', linestyle='None', markersize=15, label='Start')
+        end_handle = Line2D([0], [0], marker='H', color='black', linestyle='None', markersize=15, label='End')
+        legend_handles.append(start_handle)
+        legend_handles.append(end_handle)
+
+        # Add legend with custom handles
+        plt.legend(handles=legend_handles, loc='best')
+
+        if SafeFig == True:
+
+            def directory_exists(directory_name):
+                root_directory = os.getcwd()  # Root directory on Unix-like systems
+                directory_path = os.path.join(root_directory, directory_name)
+                return os.path.isdir(directory_path)
+
+            directory_name = 'images/trajectory_plots_2D'
+            if directory_exists(directory_name):
+                
+                if 'LSQM' in legend_cust:
+                    plt.savefig(directory_name + '/{}_allin1_A_smooth.png'.format(f_feas.func_type), bbox_inches='tight')
+                    plt.savefig(directory_name + '/{}_allin1_A_smooth.jpg'.format(f_feas.func_type), format = 'jpg', bbox_inches = 'tight', dpi=300)
+                else:
+                    plt.savefig(directory_name + '/{}_allin1_B_smooth.png'.format(f_feas.func_type), bbox_inches='tight')
+                    plt.savefig(directory_name + '/{}_allin1_B_smooth.jpg'.format(f_feas.func_type), format = 'jpg', bbox_inches = 'tight', dpi=300)
             else:
                 print(f"The directory '{directory_name}' does not exist in the root directory.")
 

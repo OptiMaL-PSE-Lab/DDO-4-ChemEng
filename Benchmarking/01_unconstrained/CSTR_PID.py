@@ -14,6 +14,11 @@ class CSTRSimulation:
         self.repetitions = repetitions
         self.traj_pid = {'t_c': [], 'T': [], 'Tc': []}
 
+        '''
+        T is the control variable (Reactor temperature)
+        Tc is the manipulated variable (Cooling jacket temperature)
+        '''
+
         # Initial conditions for the states
         x0 = np.zeros(5)
         x0[0] = 0.87725294608097  # Initial concentration of A in CSTR (mol/m^3)
@@ -389,6 +394,11 @@ class CSTRSimulation:
         return xdot
     
     def PID(self, Ks, x, x_setpoint, e_history):
+
+        '''
+        returns the controll actions for the cooling jacket tmperature and the inlet flowrate
+        '''
+
         Ks = np.array(Ks)
         Ks = Ks.reshape(32, order="C")
         # u_T gains for Ca, Cb, T, V, and bias
@@ -453,15 +463,26 @@ class CSTRSimulation:
         return u_T, u_F
     
     def J_ControlCSTR(self, Ks, full_output=False):
+
+        '''
+        This is the PID controller problem formulated as an objective function
+        it takes the 32 controller gains (16 for the cooling jacket control action and 16 for the inlet flowrate control action)
+        it returns the error + the penalty for the change in controller action as an array with the length being the number of discrete timesteps
+        '''
+
+
         data_res = self.data_res
         # load data
+        # state variables
         Ca = copy.deepcopy(data_res["Ca_ct"])
-        V = copy.deepcopy(data_res["V_ct"])
         Cb = copy.deepcopy(data_res["Cb_ct"])
-        Tc = copy.deepcopy(data_res["Tc_ct"])
         Cc = copy.deepcopy(data_res["Cc_ct"])
-        Fin = copy.deepcopy(data_res["Fin_ct"])
         T = copy.deepcopy(data_res["T_ct"])
+        V = copy.deepcopy(data_res["V_ct"])
+
+
+        Tc = copy.deepcopy(data_res["Tc_ct"])
+        Fin = copy.deepcopy(data_res["Fin_ct"])
         t_c = copy.deepcopy(data_res["t_c"])
         x0 = copy.deepcopy(data_res["x0"])
         noise = data_res["noise"]
@@ -480,18 +501,27 @@ class CSTRSimulation:
 
         # main loop
         for i in range(len(t_c) - 1):
+            '''
+            This is the main loop where we simulate the system for every timestep t_c
+            Hereby, the main loop produces e_history, which documents the deviation of the state variables to their setpoint over the simulated trajectory
+            the number of entries corresponds to the number of discretized time-steps
+            '''
             # delta t
             ts = [t_c[i], t_c[i + 1]]
             # desired setpoint
             x_sp = np.array([x0[0], Cb_des[i], x0[2], T_des[i], x0[4]])
             # compute control
+            # everytime this objective function is called, it calculates an entire trajectory of cooling jacket temperature, and inlet flowrate. 
+            # Then, based on these controller actions, the deviation of the reactor temperature set point is calculated and serves as the objective function value
+            # starting from scratch
             if i == 0:
                 Tc[i], Fin[i] = self.PID(Ks, x, x_sp, np.array([[x0[0], Tc_lb, x0[2], Fin_lb, x0[4]]]))
+            # starting from a higher iteration
             else:
                 Tc[i], Fin[i] = self.PID(Ks, x, x_sp, np.array(e_history))
             # simulate reactor
             y = odeint(self.cstr, x, ts, args=(Tc[i], Fin[i]))
-            # adding stochastic behaviour
+            # adding stochastic behaviour with y being the reactor output for the state variables and s being the noise
             s = np.random.normal(0, 0.5, size=5)
             Ca[i + 1] = max([y[-1][0] * (1 + s[0] * 0.01 * noise), 0])
             Cb[i + 1] = max([y[-1][1] * (1 + s[1] * 0.01 * noise), 0])
@@ -504,13 +534,14 @@ class CSTRSimulation:
             x[2] = Cc[i + 1]
             x[3] = T[i + 1]
             x[4] = V[i + 1]
-            # compute tracking error
+            # compute tracking error as difference between setpoint and current values of the state variables 
             e_history.append(x_sp - x)
 
         self.add_data_point(t_c, T, Tc)
 
         # == objective == #
         # production
+        # get the error in reactor Temperaure (column 4)
         error = np.abs(np.array(e_history)[:, 3])
 
         # penalize magnitude of control action

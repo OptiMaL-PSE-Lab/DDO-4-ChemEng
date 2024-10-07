@@ -73,7 +73,33 @@ class Test_function:
 
         if self.func_type == 'Rosenbrock_f':
             self.x0 = np.array(
-                ([[-3.5],[4]],
+                (
+                [[-4],[2]], # this needs to be deleted again. I've changed the calling function so that it always calls
+                # the first one anyways
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
+                [[-4],[2]],
                 [[-4.7],[0]],
                 [[-1],[1]],
                 [[-4.7], [4.5]],
@@ -83,6 +109,7 @@ class Test_function:
                 [[-3], [2]],
                 [[-1], [3]],
                 [[0.5], [2]],
+                [[-2.5], [0.5]],
                 ))
 
             self.init_points = np.array(
@@ -129,7 +156,32 @@ class Test_function:
             
         if self.func_type == 'Antonio_f':
             self.x0 = np.array(
-                ([[-4],[-4]],
+                (
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
+                [[-4.3],[-2.5]],
                 [[-3],[1]],
                 [[1],[4]],
                 [[-4], [-3]],
@@ -183,7 +235,32 @@ class Test_function:
 
         if self.func_type == 'Matyas_f':
             self.x0 = np.array(
-                ([[-4],[-4]],
+                (
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
+                [[-4],[-3]],
                 [[-4],[4]],
                 [[-1],[2]],
                 [[-2.5],[-4]],
@@ -235,16 +312,46 @@ class Test_function:
         if self.func_type == 'WO_f':
 
             self.x0 = np.array(
-                ([[6.9], [83]],
-                 [[6.75], [72.5]],
-                 [[6.75], [75]],
-                 [[6], [75]],
-                 [[6], [80]], 
-                 [[5.5], [77.5]],
-                 [[5.5], [82.5]],
-                 [[6.75], [87.5]],
-                 [[6.25], [85]],
-                 [[6.9], [91]]
+                (
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.9], [83]],
+                [[6.75], [72.5]],
+                [[6.75], [75]],
+                [[6], [75]],
+                [[6], [80]], 
+                [[5.5], [77.5]],
+                [[5.5], [82.5]],
+                [[6.75], [87.5]],
+                [[6.25], [85]],
+                [[6.9], [91]]
                 ))
             
             self.init_points = np.array([[
@@ -351,7 +458,7 @@ class Test_function:
             # here we need the objective function now
             WO_instance = WO_system()
             z = WO_instance.WO_obj_sys_ca_noise_less(x)
-
+            # z = WO_instance.WO_obj_sys_ca(x)
             # track f 
             self.f_list.append(z) 
             if self.track_x:
@@ -485,8 +592,10 @@ class Test_function:
 
             WO_instance = WO_system()
 
-            g1 = WO_instance.WO_con1_sys_ca_noise_less(x)
-            g2 = WO_instance.WO_con2_sys_ca_noise_less(x)
+            # g1 = WO_instance.WO_con1_sys_ca_noise_less(x)
+            # g2 = WO_instance.WO_con2_sys_ca_noise_less(x)
+            g1 = WO_instance.WO_con1_sys_ca(x)
+            g2 = WO_instance.WO_con2_sys_ca(x)
 
             if isinstance(g1, float) and g1 > vio:
 
@@ -516,8 +625,8 @@ class Test_function:
 
     def WO_con1_test(self,x):
         WO_instance_con1 = WO_system()
-        con1_val = WO_instance_con1.WO_con1_sys_ca_noise_less(x)
-
+        # con1_val = WO_instance_con1.WO_con1_sys_ca_noise_less(x)
+        con1_val = WO_instance_con1.WO_con1_sys_ca(x)
         if isinstance(con1_val, float) and con1_val > vio:
 
             # track g 
@@ -533,8 +642,8 @@ class Test_function:
     def WO_con2_test(self,x):
         WO_instance_con2 = WO_system()
         
-        con2_val = WO_instance_con2.WO_con2_sys_ca_noise_less(x)
-    
+        # con2_val = WO_instance_con2.WO_con2_sys_ca_noise_less(x)
+        con2_val = WO_instance_con2.WO_con2_sys_ca(x)
         if isinstance(con2_val, float) and con2_val > vio:
 
             # track g 
@@ -600,7 +709,7 @@ class Test_function:
         6.92x1+49.815-x2<=0
         '''
         x1 = x
-        return 6.55*x1+51.9
+        return 6.55*x1+51.84
 
     def WO_con2_plot(self,x):
 
@@ -643,11 +752,16 @@ class Test_function:
         Truncate or pad list 
         '''
         # get last element
-        b_last = copy.deepcopy(self.best_f[:n_p])[-1]
-        l_last = copy.deepcopy(self.f_list[:n_p])[-1]   
+        try: #in case called without best_f_list() before
+            b_last = copy.deepcopy(self.best_f[:n_p])[-1]
+            self.best_f_c = copy.deepcopy(self.best_f[:n_p]) + [b_last]*(n_p - len(self.best_f[:n_p]))
+        except: b_last = None
+
+        l_last = copy.deepcopy(self.f_list[:n_p])[-1]
+        x_last = copy.deepcopy(self.x_list[:n_p])[-1]
         
-        self.best_f_c = copy.deepcopy(self.best_f[:n_p]) + [b_last]*(n_p - len(self.best_f[:n_p]))
         self.f_list_c = copy.deepcopy(self.f_list[:n_p]) + [l_last]*(n_p - len(self.f_list[:n_p]))
+        self.x_list_c = copy.deepcopy(self.x_list[:n_p]) + [x_last]*(n_p - len(self.x_list[:n_p]))
 
 # TODO -> plot every algorithm trajectory with best, meadian, 25% and 75%
 # computer best trajectory inside class algorithm

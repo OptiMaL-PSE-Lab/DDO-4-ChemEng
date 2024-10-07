@@ -31,7 +31,7 @@ def Random_searchENT(f, n_p, bounds_rs, iter_rs):
 
 
 
-def opt_ENTMOOT(
+def ENTMOOT(
         t_, 
         N_x_, 
         bounds_, 
