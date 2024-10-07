@@ -1,0 +1,1 @@
+Smoothening now also for the Matyas function

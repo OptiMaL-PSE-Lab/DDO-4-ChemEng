@@ -6,11 +6,39 @@ import pickle
 from datetime import datetime
 import statistics
 from tqdm import tqdm
+from matplotlib.font_manager import FontProperties
+from matplotlib.lines import Line2D
+
+def pad_or_truncate(listf_, n_p):
+    '''
+    n_p: number of desired elements on list
+    -------
+    Truncate or pad list 
+    '''
+    # get last element
+    b_last = copy.deepcopy(listf_[:n_p])[-1]
+    best_f_c = copy.deepcopy(listf_[:n_p]) + [b_last]*(n_p - len(listf_[:n_p]))
+
+    return best_f_c
+
+def pad_or_truncate(listx_, n_p):
+    '''
+    n_p: number of desired elements on list
+    -------
+    Truncate or pad list 
+    '''
+    listx_ = np.array(listx_)
+    # get last element
+    b_last = listx_[:,n_p]
+    best_f_c = copy.deepcopy(listx_[:n_p]) + [b_last]*(n_p - len(listx_[:n_p])) 
+    best_f_c = listx_[:,:n_p].to_list() + [b_last.to_list()]*(n_p - listx_.shape[1])
+
+    return best_f_c
+
 
 #########################################
 ####### Starting point generator ########
 #########################################
-import numpy as np
 
 def random_points_in_circle(n, radius, center, seed=None):
     """
@@ -483,9 +511,19 @@ def ML4CE_con_table_plot(array, functions_test, algorithms_test, N_x_l, home_dir
             plt.title(algorithms_test[i].__name__)
             plt.show()
 
+
 def ML4CE_con_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, timestamp, SafeFig=False):
 
-    colors = plt.cm.tab10(np.linspace(0, 1, len(algs_test)))
+    # Set the font properties globally
+    plt.rcParams.update({
+        'text.usetex': True,
+        'font.size': 28,
+        'font.family': 'lmr',
+        'xtick.labelsize': 26,
+        'ytick.labelsize': 26,
+    })
+    # colors = plt.cm.tab10(np.linspace(0, 1, len(algs_test)))
+    colors = ['#1A73B2','#D62627', '#E476C2','#0BBBCD']
     line_styles = ['-', '--', '-.', ':']  
     alg_indices = {alg: i for i, alg in enumerate(algs_test)}
 
@@ -497,26 +535,25 @@ def ML4CE_con_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, timest
             plt.figure(figsize=(15, 15))
             for i_alg in algs_test:
                 trial_ = test_res[dim_S][funcs_test[i_fun]]['all means'][str(i_alg.__name__)]
-                up_     = test_res[dim_S][funcs_test[i_fun]]['all 90'][str(i_alg.__name__)]
-                down_   = test_res[dim_S][funcs_test[i_fun]]['all 10'][str(i_alg.__name__)]
-                alg_index = alg_indices[i_alg]  # Get the index of the algorithm
+                up_ = test_res[dim_S][funcs_test[i_fun]]['all 90'][str(i_alg.__name__)]
+                down_ = test_res[dim_S][funcs_test[i_fun]]['all 10'][str(i_alg.__name__)]
+                alg_index = alg_indices[i_alg]
                 color = colors[alg_index]
-                line_style = line_styles[alg_index % len(line_styles)]  # Use modulo to cycle through line styles
-                plt.plot(trial_, '-o', color=color, linestyle=line_style, lw=3, label=str(i_alg.__name__), markersize = 10)
+                line_style = line_styles[alg_index % len(line_styles)]
+                plt.plot(trial_, '-o', color=color, linestyle=line_style, lw=4, label=str(i_alg.__name__), markersize=10)
                 x_ax = np.linspace(0, len(down_), len(down_), endpoint=False)
-                plt.gca().fill_between(x_ax,down_, up_, color=color, alpha=0.2)
+                plt.fill_between(x_ax, down_, up_, color=color, alpha=0.2)
 
-                #### NO VERTICAL LINE IN CONSTRAINT SINCE WE MEASURE ALL REPETITIONS ################
                 # # Calculate the position of the vertical line based on the length of the trajectory
                 # length = len(down_)
                 # if length == 20:
-                #     vline_pos = 5
+                #     vline_pos = 10
                 # elif length == 50:
                 #     vline_pos = 10
                 # elif length == 100:
                 #     vline_pos = 15
                 # else:
-                #     vline_pos = None  # Or set a default value if needed
+                    # vline_pos = None
 
                 # # Add the vertical line if a valid position is calculated
                 # if vline_pos is not None:
@@ -530,37 +567,59 @@ def ML4CE_con_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, timest
                 if len(tick_labels) < len(tick_positions):
                     tick_labels = np.append(tick_labels, len(down_) - 1)
 
-                plt.xticks(tick_positions, tick_labels, fontsize=24, fontname='Times New Roman')
+                plt.xticks(tick_positions, tick_labels)
 
-            plt.ylabel('obj value', fontsize = '28', fontname='Times New Roman')
-            plt.xlabel('iterations', fontsize = '28', fontname='Times New Roman')
-            # plt.yscale('log')
-            plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24}, frameon=False)
-            plt.tick_params(axis='x', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of x ticks
-            plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
-            # plt.title(funcs_test[i_fun] + ' ' + dim_S + ' convergence plot')
-            # grid(True)
-        
+            legend_handles = []
+            legend_cust = [
+                'CBO',
+                'COBYLA',
+                'COBYQA',
+                'CUATRO',
+            ]
+            for alg, label in zip(algs_test, legend_cust):
+                alg_index = alg_indices[alg]
+                color = colors[alg_index]
+                line_style = line_styles[alg_index % len(line_styles)]
+                handle = Line2D([0], [0], color=color, linestyle=line_style, lw=4, label=label)
+                legend_handles.append(handle)
+
+            plt.ylabel('Objective Function Value')
+            plt.xlabel('Iterations')
+            if funcs_test[i_fun] != 'WO_f': plt.yscale('log')
+            plt.legend(handles=legend_handles, loc='best', frameon=False)
+            plt.grid(True)
+    
             if SafeFig == True:
 
-                def directory_exists(directory_name):
-                    root_directory = os.getcwd()  # Root directory on Unix-like systems
-                    directory_path = os.path.join(root_directory, directory_name)
-                    return os.path.isdir(directory_path)
+                    def directory_exists(directory_name):
+                        root_directory = os.getcwd()  # Root directory on Unix-like systems
+                        directory_path = os.path.join(root_directory, directory_name)
+                        return os.path.isdir(directory_path)
 
-                directory_name = os.path.join(home_dir, timestamp, 'trajectory_plots_1D')
-                if directory_exists(directory_name):
+                    directory_name = os.path.join(home_dir, timestamp, 'trajectory_plots_1D')
+                    if directory_exists(directory_name):
 
-                    plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]))
-                else:
-                    print(f"The directory '{directory_name}' does not exist in the root directory.")
-                    os.mkdir(directory_name)
-                    plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]))
-
+                        plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]), bbox_inches = 'tight')
+                        plt.savefig(directory_name + '/{}_{}_1D.jpg'.format(dim_S, funcs_test[i_fun]), format = 'jpg', bbox_inches = 'tight', dpi=300)
+                    else:
+                        print(f"The directory '{directory_name}' does not exist in the root directory.")
+                        os.mkdir(directory_name)
+                        plt.savefig(directory_name + '/{}_{}_1D.png'.format(dim_S, funcs_test[i_fun]), bbox_inches = 'tight')
+                        plt.savefig(directory_name + '/{}_{}_1D.jpg'.format(dim_S, funcs_test[i_fun]), format = 'jpg', bbox_inches = 'tight', dpi=300)
 
 def ML4CE_con_graph_abs_g(test_res, algs_test, funcs_test, N_x_l, home_dir, timestamp, SafeFig=False):
-
-    colors = plt.cm.tab10(np.linspace(0, 1, len(algs_test)))
+    
+        # Set the font properties globally
+    plt.rcParams.update({
+        'text.usetex': True,
+        'font.size': 28,
+        'font.family': 'lmr',
+        'xtick.labelsize': 26,
+        'ytick.labelsize': 26,
+    })
+    # colors = plt.cm.tab10(np.linspace(0, 1, len(algs_test)))
+    colors = ['#1A73B2','#D62627', '#E476C2','#0BBBCD']    
+    # colors = plt.cm.tab10(np.linspace(0, 1, len(algs_test)))
     line_styles = ['-', '--', '-.', ':']  
     alg_indices = {alg: i for i, alg in enumerate(algs_test)}
 
@@ -572,35 +631,34 @@ def ML4CE_con_graph_abs_g(test_res, algs_test, funcs_test, N_x_l, home_dir, time
             plt.figure(figsize=(15, 15))
             for i_alg in algs_test:
                 trial_ = test_res[dim_S][funcs_test[i_fun]]['all means g'][str(i_alg.__name__)]
-                up_     = test_res[dim_S][funcs_test[i_fun]]['all 90 g'][str(i_alg.__name__)]
-                down_   = test_res[dim_S][funcs_test[i_fun]]['all 10 g'][str(i_alg.__name__)]
-                alg_index = alg_indices[i_alg]  # Get the index of the algorithm
+                up_ = test_res[dim_S][funcs_test[i_fun]]['all 90 g'][str(i_alg.__name__)]
+                down_ = test_res[dim_S][funcs_test[i_fun]]['all 10 g'][str(i_alg.__name__)]
+                alg_index = alg_indices[i_alg]
                 color = colors[alg_index]
-                line_style = line_styles[alg_index % len(line_styles)]  # Use modulo to cycle through line styles
-                plt.plot(trial_, '-o', color=color, linestyle=line_style,  lw=3, label=str(i_alg.__name__), markersize = 10)
+                line_style = line_styles[alg_index % len(line_styles)]
+                plt.plot(trial_, '-o', color=color, linestyle=line_style, lw=4, label=str(i_alg.__name__), markersize=10)
                 x_ax = np.linspace(0, len(down_), len(down_), endpoint=False)
-                plt.gca().fill_between(x_ax,down_, up_, color=color, alpha=0.2)
+                plt.fill_between(x_ax, down_, up_, color=color, alpha=0.2)
 
-                # Add vertical line at x=0
-                plt.axhline(y=0, color='black', linestyle='--', linewidth=2)
+                # Add horizontal line at y=0
+                plt.axhline(y=0, color='black', linestyle='--', linewidth=3)
 
-                #### NO VERTICAL LINE IN CONSTRAINT SINCE WE MEASURE ALL REPETITIONS ################
-                # # Calculate the position of the vertical line based on the length of the trajectory
-                # length = len(down_)
-                # if length == 20:
-                #     vline_pos = 5
-                # elif length == 50:
-                #     vline_pos = 10
-                # elif length == 100:
-                #     vline_pos = 15
-                # else:
-                #     vline_pos = None  # Or set a default value if needed
+                # Calculate the position of the vertical line based on the length of the trajectory
+                length = len(down_)
+                if length == 20:
+                    vline_pos = 10
+                elif length == 50:
+                    vline_pos = 10
+                elif length == 100:
+                    vline_pos = 15
+                else:
+                    vline_pos = None
 
                 # # Add the vertical line if a valid position is calculated
                 # if vline_pos is not None:
-                #     plt.axvline(x=vline_pos, color='black', linestyle='--', linewidth=2)
+                #     plt.axvline(x=vline_pos, color='black', linestyle='-.', linewidth=2)
 
-                # # Setting x-axis ticks to integer values starting from 0 and showing every 5th tick
+                # Setting x-axis ticks to integer values starting from 0 and showing every 5th tick
                 tick_positions = np.arange(0, len(down_), 5)
                 if (len(down_) - 1) % 5 != 0:  # If the last position is not already included
                     tick_positions = np.append(tick_positions, len(down_) - 1)
@@ -608,16 +666,35 @@ def ML4CE_con_graph_abs_g(test_res, algs_test, funcs_test, N_x_l, home_dir, time
                 if len(tick_labels) < len(tick_positions):
                     tick_labels = np.append(tick_labels, len(down_) - 1)
 
-                plt.xticks(tick_positions, tick_labels, fontsize=24, fontname='Times New Roman')
+                plt.xticks(tick_positions, tick_labels)
 
-            plt.ylabel('constraint value', fontsize = '28', fontname='Times New Roman')
-            plt.xlabel('iterations', fontsize = '28', fontname='Times New Roman')
-            # plt.yscale('log')
-            plt.legend(loc='best', prop={'family':'Times New Roman', 'size': 24}, frameon=False)
-            plt.tick_params(axis='x', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of x ticks
-            plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
-            # plt.title(funcs_test[i_fun] + ' ' + dim_S + ' convergence plot')
-            # grid(True)
+            legend_handles = []
+            legend_cust = [
+                'CBO',
+                'COBYLA',
+                'COBYQA',
+                'CUATRO',
+            ]
+            for alg, label in zip(algs_test, legend_cust):
+                alg_index = alg_indices[alg]
+                color = colors[alg_index]
+                line_style = line_styles[alg_index % len(line_styles)]
+                handle = Line2D([0], [0], color=color, linestyle=line_style, lw=4, label=label)
+                legend_handles.append(handle)
+
+            # Add a custom legend handle for the horizontal line at y=0
+            hline_handle = Line2D([0], [0], color='black', linestyle='--', lw=3, label='$g(x) = 0$')
+            legend_handles.append(hline_handle)
+
+            plt.ylabel('Constraint Function Value')
+            plt.xlabel('Iterations')
+
+            if funcs_test[i_fun] == 'Rosenbrock_f': top = 2
+            if funcs_test[i_fun] == 'Antonio_f': top = 2.5
+            if funcs_test[i_fun] == 'Matyas_f': top = 10
+            plt.ylim(top=top)
+            plt.legend(handles=legend_handles, loc='lower right', frameon=False)
+            plt.grid(True)
         
             if SafeFig == True:
 
@@ -629,11 +706,13 @@ def ML4CE_con_graph_abs_g(test_res, algs_test, funcs_test, N_x_l, home_dir, time
                 directory_name = os.path.join(home_dir, timestamp, 'trajectory_plots_1D')
                 if directory_exists(directory_name):
 
-                    plt.savefig(directory_name + '/{}_{}_g_1D.png'.format(dim_S, funcs_test[i_fun]))
+                    plt.savefig(directory_name + '/{}_{}_g_1D.png'.format(dim_S, funcs_test[i_fun]), bbox_inches = 'tight')
+                    plt.savefig(directory_name + '/{}_{}_g_1D.jpg'.format(dim_S, funcs_test[i_fun]), format = 'jpg', bbox_inches = 'tight', dpi=300)
                 else:
                     print(f"The directory '{directory_name}' does not exist in the root directory.")
                     os.mkdir(directory_name)
-                    plt.savefig(directory_name + '/{}_{}_g_1D.png'.format(dim_S, funcs_test[i_fun]))
+                    plt.savefig(directory_name + '/{}_{}_g_1D.png'.format(dim_S, funcs_test[i_fun]), bbox_inches = 'tight')
+                    plt.savefig(directory_name + '/{}_{}_g_1D.jpg'.format(dim_S, funcs_test[i_fun]), format = 'jpg', bbox_inches = 'tight', dpi=300)
 
 def ML4CE_con_contours(
         obj_func, 
@@ -748,23 +827,45 @@ def ML4CE_con_contours(
 
         plt.close()
 
-
-import numpy as np
-import matplotlib.pyplot as plt
-
+import matplotlib.colors as mcolors
 def ML4CE_con_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_origin, bounds_, i_rep, bounds_plot, directory_name, SafeFig=False):
     
+    # Set the font properties globally
+    plt.rcParams.update({
+        'text.usetex': True,
+        'font.size': 28,
+        'font.family': 'lmr',
+        'xtick.labelsize': 26,
+        'ytick.labelsize': 26,
+    })
+
     # track time
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     
     # create lab_journal
-    lab_journal(directory_name, timestamp,file_name='INFO', SafeData=SafeFig)
+    lab_journal(directory_name, timestamp,file_name='INFO.txt', SafeData=SafeFig)
 
-    # data inputs
-    f_eval_ = 40 # trajectory length (= evaluation budget) --> Keep in mind that BO uses 10 datapoints to build the model when plotting
+    # data inputs, set to 60 for good visuals
+    f_eval_ = 60 # trajectory length (= evaluation budget) --> Keep in mind that BO uses 10 datapoints to build the model when plotting
+    
     track_x = True
-    colors = plt.cm.tab10(np.linspace(0, 1, len(algorithms_test)))
+    # line_colors = ['k-','b-','g-','c-'] looks like this is not needed
+    # colors = plt.cm.tab10(np.linspace(0, 1, len(algorithms_test)))
+    '''
+    #CE7FA0 - Corallenrot
+    #FAFCD7 - Orange
+    #CDEAD1 - Gruen
+    #9AC0DC - Himmelblau
+    In combination with Greys
+    colors = ['#CE7FA0', '#FAFCD7', '#CDEAD1', '#9AC0DC']
+    '''
+    colors = ['#1A73B2','#D62627', '#E476C2','#0BBBCD', ]
+    # colors = ['k','b','g','c']
+
     alg_indices = {alg: i for i, alg in enumerate(algorithms_test)}
+
+    # add function counter for plotting size dependend on function
+    fun_n = 0
 
     # perform plotting
     for fun_ in functions_test:
@@ -774,14 +875,17 @@ def ML4CE_con_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_orig
         ### CONTOUR AND CONSTRAINT LINES ###
         ####################################
         # evaluate grid with vmap
-        n_points = 50
-        x1lb = bounds_plot[0][0]
-        x1ub = bounds_plot[0][1]
+        n_points = 100 # how 'round' the lines of the contour are
+        x1lb = bounds_plot[fun_n][0][0]
+        x1ub = bounds_plot[fun_n][0][1]
         x1 = np.linspace(start=x1lb, stop=x1ub, num=n_points)
-        x2lb = bounds_plot[1][0]
-        x2ub = bounds_plot[1][1]
+        x2lb = bounds_plot[fun_n][1][0]
+        x2ub = bounds_plot[fun_n][1][1]
         x2 = np.linspace(start=x2lb, stop=x2ub, num=n_points)
         X1, X2 = np.meshgrid(x1, x2)
+
+        # set function counter
+        fun_n += 1
 
         # define plot
         plt.figure(figsize=(15, 15))
@@ -791,13 +895,29 @@ def ML4CE_con_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_orig
         y = np.empty((n_points, n_points))
 
         # Iterate over each element and apply the function
-        for i in range(n_points):
+        print('drawing contour')
+        for i in tqdm(range(n_points)):
             for j in range(n_points):
                 y[i, j] = f_contour.fun_test(np.array([[X1[i, j], X2[i, j]]]).flatten())
+        
+        #change scale for all except WO
+        if fun_ != 'WO_f': 
+            y = np.log2(y+1)
+            # Normalize the y values for the contour plot
+            norm = mcolors.Normalize(vmin=np.min(y), vmax=np.max(y))
+            contour = plt.contourf(X1, X2, y, levels=50, cmap='Spectral_r', norm=norm, alpha=0.5, linewidths=0.5)
+        else:
+            # Plot the contour with normalization
+            '''
+            levels = no. of contour lines
+            settings for non-WO: levels = 10, points = 400, log, norm, alpha = 0.5, smap=Spectral_r
+            settings for WO: levels = , points = , norm, alpha = 0.5
+            norm = normalized contour levels smoothen the coloring
+            alpha = transparency of the contour map
+            '''
+            contour = plt.contourf(X1, X2, y, levels=50, cmap='Spectral_r', alpha=0.5, linewidths=0.5)
 
-        # add objective contour
-        ax3.contour(X1, X2, y, 50)
-
+        # Create constraints for plot
         if fun_ == 'WO_f':
             con_list1 = [f_contour.WO_con1_plot(x_i) for x_i in x1]
             con_list2 = [f_contour.WO_con2_plot(x_i) for x_i in x1]
@@ -808,12 +928,12 @@ def ML4CE_con_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_orig
 
         # add constraints to plot
         if fun_ == 'Rosenbrock_f':
-            ax3.plot(con_list,x2, 'black', linewidth=3) #!!! careful here where to put x1 and x2
+            ax3.plot(con_list,x2, 'k--', linewidth=3, alpha=0.6) #!!! careful here where to put x1 and x2
         elif fun_ == 'WO_f':
-            ax3.plot(x1,con_list1, 'black', linewidth=3)
-            ax3.plot(x1,con_list2, 'black', linewidth=3)
+            ax3.plot(x1,con_list1, 'k--', linewidth=3, alpha=0.6)
+            ax3.plot(x1,con_list2, 'k--', linewidth=3, alpha=0.6)
         else:
-            ax3.plot(x1,con_list, 'black', linewidth=3) #!!! careful here where to put x1 and x2
+            ax3.plot(x1,con_list, 'k--', linewidth=3, alpha=0.6) #!!! careful here where to put x1 and x2
         
         ax3.axis([x1lb,x1ub,x2lb,x2ub])
 
@@ -835,7 +955,7 @@ def ML4CE_con_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_orig
 
             # get and plot all evaluations
             X_all = np.array(f_plot.x_list)
-            ax3.scatter(X_all[:,0], X_all[:,1], marker='o', color=color)
+            ax3.scatter(X_all[:,0], X_all[:,1], marker='o', color=color, alpha=0.4)
 
             # re-test for feasibility
             f_feas = Test_function(fun_, N_x_, track_x)
@@ -856,31 +976,317 @@ def ML4CE_con_contour_allin1(functions_test, algorithms_test, N_x_, x_shift_orig
             # plot
             best_values_x1 = [point[0] for point in f_feas.best_x]
             best_values_x2 = [point[1] for point in f_feas.best_x]
-            ax3.plot(best_values_x1, best_values_x2, marker='o', linestyle='-', color=color, label=alg_.__name__)
 
-            # Add starting point to the trajectory
-            try: ax3.plot(X_all[0,0], X_all[0,1], marker='s', color='black', markersize=10)
-            except: ax3.plot(X_all[0,0,0], X_all[0,1,0], marker='s', color='black', markersize=10)
+            # insert starting point
+            if fun_ == 'Matyas_f' or fun_ =='WO_f':best_values_x1.insert(0, f_plot.x0[i_rep][0][0])
+            else:best_values_x1.insert(0, np.array(f_plot.x0[i_rep][0]))
 
-            ax3.axis([x1lb, x1ub, x2lb, x2ub])
-            plt.ylabel('X2', fontsize='28', fontname='Times New Roman')
-            plt.xlabel('X1', fontsize='28', fontname='Times New Roman')
-            plt.tick_params(axis='x', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of x ticks
-            plt.tick_params(axis='y', labelsize=24, labelcolor='black', labelfontfamily='Times New Roman')  # Set size and font name of y ticks
+            if f_feas.func_type == 'Matyas_f' or fun_=="WO_f": best_values_x2.insert(0, f_plot.x0[i_rep][1][0])
+            else: best_values_x2.insert(0, np.array(f_plot.x0[i_rep][1]))
 
-        # Add legend
-        plt.legend(fontsize=24, frameon=False)
+            # plot best values
+            # linewidth was 3 before
+            ax3.plot(best_values_x1, best_values_x2, colors[alg_index], linewidth = 3, label=alg_.__name__, zorder=5)
+
+            # highlight starting point
+            ax3.plot(f_plot.x0[i_rep][0], f_plot.x0[i_rep][1], marker='X', color='black', markersize=15, zorder=6)
+
+            # highlight end point
+            ax3.plot(best_values_x1[-1], best_values_x2[-1], colors[alg_index], marker='H',markersize=15, zorder=10)
+            
+            # set lables
+            plt.ylabel('$x_2$')
+            plt.xlabel('$x_1$')
+
+            # remove ticks
+            plt.xticks([])
+            plt.yticks([])
+
+            # Custom legend labels
+            legend_cust = [
+                    'CBO',
+                    'COBYLA',
+                    'COBYQA',
+                    'CUATRO',
+            ]
+
+            # Create custom legend handles
+            legend_handles = []
+            for alg, label in zip(algorithms_test, legend_cust):
+                alg_index = alg_indices[alg]
+                color = colors[alg_index]
+                handle = Line2D([0], [0], color=color, linestyle='-', lw=3, label=label)
+                legend_handles.append(handle)
+
+            # Add a custom legend handle for the constraint, start, and end
+            hline_handle = Line2D([0], [0], color='black', linestyle='--', lw=3, label='$g(x) = 0$', alpha=0.6)
+            start_handle = Line2D([0], [0], marker='X', color='black', linestyle='None', markersize=15, label='Start')
+            end_handle = Line2D([0], [0], marker='H', color='black', linestyle='None', markersize=15, label='End')
+            legend_handles.append(hline_handle)
+            legend_handles.append(start_handle)
+            legend_handles.append(end_handle)
+
+            # Add legend with custom handles
+            plt.legend(handles=legend_handles, loc='lower right')
 
         # Data Saving
         if SafeFig == True:
             if directory_exists(directory_name + '/' + timestamp):
-                plt.savefig(directory_name + '/' + timestamp + '/{}_allin1.png'.format(fun_))
+                plt.savefig(directory_name + '/' + timestamp + '/{}_allin1.png'.format(fun_), bbox_inches = 'tight')
+                plt.savefig(directory_name + '/' + timestamp + '/{}_allin1.jpg'.format(fun_), format = 'jpg', bbox_inches = 'tight', dpi=300)
+                # plt.savefig(directory_name + '/' + timestamp + '/{}_allin1.jpg'.format(fun_), format='jpg', bbox_inches = 'tight', dpi=300)
             else:
                 print(f"The directory '{directory_name}' does not exist in the root directory. Creating directory.")
                 os.mkdir(directory_name+ '/' + timestamp)
-                plt.savefig(directory_name + '/' + timestamp + '/{}_allin1.png'.format(fun_))
+                plt.savefig(directory_name + '/' + timestamp + '/{}_allin1.png'.format(fun_), bbox_inches = 'tight')
+                plt.savefig(directory_name + '/' + timestamp + '/{}_allin1.jpg'.format(fun_), format = 'jpg', bbox_inches = 'tight', dpi=300)
             plt.close
 
         else:
             plt.show()
     
+
+import matplotlib.colors as mcolors
+def ML4CE_con_contour_allin1_smooth(functions_test, algorithms_test, N_x_, x_shift_origin, bounds_, x0_in, reps, bounds_plot, directory_name, SafeFig=False):
+    
+    # Set the font properties globally
+    plt.rcParams.update({
+        'text.usetex': True,
+        'font.size': 28,
+        'font.family': 'lmr',
+        'xtick.labelsize': 26,
+        'ytick.labelsize': 26,
+    })
+
+    # track time
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    
+    # create lab_journal
+    lab_journal(directory_name, timestamp,file_name='INFO.txt', SafeData=SafeFig)
+
+    # data inputs, set to 60 for good visuals
+    f_eval_ = 60 # trajectory length (= evaluation budget) --> Keep in mind that BO uses 10 datapoints to build the model when plotting
+    
+    track_x = True
+    # line_colors = ['k-','b-','g-','c-'] looks like this is not needed
+    # colors = plt.cm.tab10(np.linspace(0, 1, len(algorithms_test)))
+    '''
+    #CE7FA0 - Corallenrot
+    #FAFCD7 - Orange
+    #CDEAD1 - Gruen
+    #9AC0DC - Himmelblau
+    In combination with Greys
+    colors = ['#CE7FA0', '#FAFCD7', '#CDEAD1', '#9AC0DC']
+    '''
+    colors = ['#1A73B2','#D62627', '#E476C2','#0BBBCD', ]
+    # colors = ['k','b','g','c']
+
+    alg_indices = {alg: i for i, alg in enumerate(algorithms_test)}
+    fun_n = 0
+    # perform plotting
+    for fun_ in functions_test:
+        f_contour = Test_function(fun_, N_x_, track_x)
+
+        ####################################
+        ### CONTOUR AND CONSTRAINT LINES ###
+        ####################################
+        # evaluate grid with vmap
+        n_points = 100 # how 'round' the lines of the contour are
+        x1lb = bounds_plot[fun_n][0][0]
+        x1ub = bounds_plot[fun_n][0][1]
+        x1 = np.linspace(start=x1lb, stop=x1ub, num=n_points)
+        x2lb = bounds_plot[fun_n][1][0]
+        x2ub = bounds_plot[fun_n][1][1]
+        x2 = np.linspace(start=x2lb, stop=x2ub, num=n_points)
+        X1, X2 = np.meshgrid(x1, x2)
+
+        # set function counter
+        fun_n += 1
+
+        # define plot
+        plt.figure(figsize=(15, 15))
+        ax3 = plt.subplot()
+
+        # Initialize an empty array to store results
+        y = np.empty((n_points, n_points))
+
+        # Iterate over each element and apply the function
+        print('drawing contour')
+        for i in tqdm(range(n_points)):
+            for j in range(n_points):
+                y[i, j] = f_contour.fun_test(np.array([[X1[i, j], X2[i, j]]]).flatten())
+        
+        #change scale for all except WO
+        if fun_ != 'WO_f': 
+            y = np.log2(y+1)
+            # Normalize the y values for the contour plot
+            norm = mcolors.Normalize(vmin=np.min(y), vmax=np.max(y))
+            contour = plt.contourf(X1, X2, y, levels=50, cmap='Spectral_r', norm=norm, alpha=0.5, linewidths=0.5)
+        else:
+            # Plot the contour with normalization
+            '''
+            levels = no. of contour lines
+            settings for non-WO: levels = 10, points = 400, log, norm, alpha = 0.5, smap=Spectral_r
+            settings for WO: levels = , points = , norm, alpha = 0.5
+            norm = normalized contour levels smoothen the coloring
+            alpha = transparency of the contour map
+            '''
+            contour = plt.contourf(X1, X2, y, levels=50, cmap='Spectral_r', alpha=0.5, linewidths=0.5)
+
+        # Create constraints for plot
+        if fun_ == 'WO_f':
+            con_list1 = [f_contour.WO_con1_plot(x_i) for x_i in x1]
+            con_list2 = [f_contour.WO_con2_plot(x_i) for x_i in x1]
+
+        else:
+            # evaluate list of points for constraint plot
+            con_list = [f_contour.con_plot(x_i) for x_i in x2]
+
+        # add constraints to plot
+        if fun_ == 'Rosenbrock_f':
+            ax3.plot(con_list,x2, 'k--', linewidth=3, alpha=0.6) #!!! careful here where to put x1 and x2
+        elif fun_ == 'WO_f':
+            ax3.plot(x1,con_list1, 'k--', linewidth=3, alpha=0.6)
+            ax3.plot(x1,con_list2, 'k--', linewidth=3, alpha=0.6)
+        else:
+            ax3.plot(x1,con_list, 'k--', linewidth=3, alpha=0.6) #!!! careful here where to put x1 and x2
+        
+        ax3.axis([x1lb,x1ub,x2lb,x2ub])
+
+        ############################
+        ### PERFORM OPTIMIZATION ###
+        ############################
+
+        # determine input 
+        i_rep_in = x0_in
+
+        for alg_ in algorithms_test:
+            
+            x_list  = []
+            for i_rep in range(reps):                
+                print('repetition: ', i_rep)
+                # initiate test function
+                f_plot = Test_function(fun_, N_x_, track_x)
+                # perform optimization
+                a, b, team_names, cids, c, d, e, f, g = alg_(f_plot, N_x_, bounds_, f_eval_, i_rep_in)
+                # make sure the lenthgs of the lists match
+                X_collect_pre = f_plot.x_list
+                X_collect = []
+                # make sure to even-out the trajectory lengths
+                if len(X_collect_pre)<f_eval_: 
+                    x_last = X_collect_pre[-1]
+                    X_collect = X_collect_pre + [x_last]*(f_eval_ - len(X_collect_pre))
+                elif len(X_collect_pre)>f_eval_:
+                    X_collect = X_collect_pre[:f_eval_]
+                else: X_collect = X_collect_pre
+                x_list.append(X_collect)
+
+            # x_list and f_list now consist of all evaluations
+            # now we build the mean
+            X_all  = np.array(x_list)
+            X_all_m  = np.mean(X_all, axis =0).reshape((f_eval_, 2))
+            # re-test for feasibility
+            f_feas = Test_function(fun_, N_x_, track_x)
+
+            if fun_ == 'WO_f':
+
+                X_feas = [x for x in X_all_m if f_feas.WO_con1_test(x) > 0 and f_feas.WO_con2_test(x) > 0]
+            else:
+
+                X_feas = [x for x in X_all_m if f_feas.con_test(x) > 0]
+
+            # produce function values for ranking
+            for x in X_feas: f_feas.fun_test(x)
+
+            # get best evaluations
+            f_feas.best_f_list()
+
+            # color setting
+            alg_index = alg_indices[alg_]
+            color = colors[alg_index]
+
+            # # Find and plot unique evaluations (otherwise too crowded)
+            # # another idea would be to adjust the alpha depending on how often a position is sampled
+            # X_all_re = X_all.reshape((f_eval_*reps,2))
+            # X_all_re_unique = np.unique(X_all_re, axis=0)
+            # ax3.scatter(X_all_re_unique[:,0], X_all_re_unique[:,1], marker='o', color=color, alpha=0.5)
+
+            # plot trajectory
+            best_values_x1 = [point[0] for point in f_feas.best_x]
+            best_values_x2 = [point[1] for point in f_feas.best_x]
+
+            print(fun_)
+            # remove weird entries from CUATRO
+            if alg_.__name__ == 'opt_CUATRO': 
+
+                best_values_x1 = best_values_x1[9:]
+                best_values_x2 = best_values_x2[9:]
+
+            if fun_ == 'Matyas_f' or fun_ =='WO_f':best_values_x1.insert(0, f_plot.x0[i_rep_in][0][0])
+            else:best_values_x1.insert(0, np.array(f_plot.x0[i_rep_in][0]))
+
+            if f_feas.func_type == 'Matyas_f' or fun_=="WO_f": best_values_x2.insert(0, f_plot.x0[i_rep_in][1][0])
+            else: best_values_x2.insert(0, np.array(f_plot.x0[i_rep_in][1]))
+
+            # plot best values
+            # linewidth was 3 before
+            ax3.plot(best_values_x1, best_values_x2, colors[alg_index], linewidth = 3, label=alg_.__name__, zorder=5)
+
+            # highlight starting point
+            ax3.plot(f_plot.x0[i_rep_in][0], f_plot.x0[i_rep_in][1], marker='X', color='black', markersize=15, zorder=6)
+
+            # highlight end point
+            ax3.plot(best_values_x1[-1], best_values_x2[-1], colors[alg_index], marker='H',markersize=15, zorder=10)
+            
+            # set lables
+            plt.ylabel('$x_2$')
+            plt.xlabel('$x_1$')
+
+            # remove ticks
+            plt.xticks([])
+            plt.yticks([])
+
+            # Custom legend labels
+            legend_cust = [
+                    'CBO',
+                    'COBYLA',
+                    'COBYQA',
+                    'CUATRO',
+            ]
+
+            # Create custom legend handles
+            legend_handles = []
+            for alg, label in zip(algorithms_test, legend_cust):
+                alg_index = alg_indices[alg]
+                color = colors[alg_index]
+                handle = Line2D([0], [0], color=color, linestyle='-', lw=3, label=label)
+                legend_handles.append(handle)
+
+            # Add a custom legend handle for the constraint, start, and end
+            hline_handle = Line2D([0], [0], color='black', linestyle='--', lw=3, label='$g(x) = 0$', alpha=0.6)
+            start_handle = Line2D([0], [0], marker='X', color='black', linestyle='None', markersize=15, label='Start')
+            end_handle = Line2D([0], [0], marker='H', color='black', linestyle='None', markersize=15, label='End')
+            legend_handles.append(hline_handle)
+            legend_handles.append(start_handle)
+            legend_handles.append(end_handle)
+
+            # Add legend with custom handles
+            plt.legend(handles=legend_handles, loc='lower right')
+
+        # Data Saving
+        if SafeFig == True:
+            if directory_exists(directory_name + '/' + timestamp):
+                plt.savefig(directory_name + '/' + timestamp + '/{}_allin1_smooth.png'.format(fun_), bbox_inches = 'tight')
+                plt.savefig(directory_name + '/' + timestamp + '/{}_allin1_smooth.jpg'.format(fun_), format = 'jpg', bbox_inches = 'tight', dpi=300)
+                # plt.savefig(directory_name + '/' + timestamp + '/{}_allin1.jpg'.format(fun_), format='jpg', bbox_inches = 'tight', dpi=300)
+            else:
+                print(f"The directory '{directory_name}' does not exist in the root directory. Creating directory.")
+                os.mkdir(directory_name+ '/' + timestamp)
+                plt.savefig(directory_name + '/' + timestamp + '/{}_allin1_smooth.png'.format(fun_), bbox_inches = 'tight')
+                plt.savefig(directory_name + '/' + timestamp + '/{}_allin1_smooth.jpg'.format(fun_), format = 'jpg', bbox_inches = 'tight', dpi=300)
+            plt.close
+
+        else:
+            plt.show()
+    
+

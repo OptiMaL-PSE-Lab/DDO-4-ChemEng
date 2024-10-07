@@ -1,1 +1,0 @@
-This first run took 132 mins on my laptop and covered all dimensions and a single repetition. 

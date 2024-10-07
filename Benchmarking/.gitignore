@@ -1,5 +1,9 @@
 /__pycache__
 
+
+#Code workspace
+*.code-workspace
+
 #Python Cache#
 ##############
 
@@ -11,7 +15,8 @@
 
 *.pyd
 *.pyc
-# *.png
+*.png
+*.jpg
 *.pkl
 
 #Compiled objects#

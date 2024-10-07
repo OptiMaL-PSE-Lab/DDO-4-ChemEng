@@ -1,5 +1,5 @@
 import numpy as np
-from cuatro import CUATRO
+from cuatro import CUATRO as CUATRO_solv
 from cuatro import *
 
 def opt_CUATRO(t_, N_x_, bounds_, f_eval_, i_rep):
@@ -12,7 +12,7 @@ def opt_CUATRO(t_, N_x_, bounds_, f_eval_, i_rep):
         if t_.func_type == 'WO_f':  return t_.fun_test(x), [-t_.WO_con1_test(x), -t_.WO_con2_test(x)]
         else: return t_.fun_test(x), [-t_.con_test(x)]
 
-    solver_instance = CUATRO(
+    solver_instance = CUATRO_solv(
                     init_radius = 0.1, # how much radius should the initial area cover 
                     beta_red = 0.001**(2/iter_), # trust region radius reduction heuristic
                     rescale_radius=True, # scale radii to unit box

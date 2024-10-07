@@ -1,0 +1,1 @@
+This is the run for the Spectral_r colormap for the WO trajectory plots
