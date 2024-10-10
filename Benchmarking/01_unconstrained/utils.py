@@ -38,10 +38,10 @@ from BO_NpScpy import*
 from test_function import*
 from utils import *
 from COBYQA import *
-from ScikitQuant_opt_algs import *
-from pySOT_opt_algs import *
-from CUATRO import *
-from ENTMOOT import *
+# from ScikitQuant_opt_algs import *
+# from pySOT_opt_algs import *
+# from CUATRO import *
+# from ENTMOOT import *
 from matplotlib.lines import Line2D
 
 import matplotlib.pyplot as plt
