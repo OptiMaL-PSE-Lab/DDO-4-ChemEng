@@ -486,32 +486,34 @@ def ML4CE_uncon_graph_abs(test_res, algs_test, funcs_test, N_x_l, home_dir, time
 
             legend_handles = []
 
-            if funcs_test[i_fun] == 'cstr_pid_f':
-                legend_cust = [
-                'SNOBFIT',
-                'SRBF',
-                'DYCORS',
-                'SOP',
-                'COBYLA',
-                'TURBO',
-                'COBYQA',
-                'CUATRO',
-                'CUATRO-pls',
-                'BO',
-            ]
-            else:
-                legend_cust = [
-                    'LSQM',
-                    'SNOBFIT',
-                    'SRBF',
-                    'DYCORS',
-                    'SOP',
-                    'COBYLA',
-                    'COBYQA',
-                    'CUATRO',
-                    'BO',
-                    'ENTMOOT',
-                ]
+            # if funcs_test[i_fun] == 'cstr_pid_f':
+            #     legend_cust = [
+            #     'SNOBFIT',
+            #     'SRBF',
+            #     'DYCORS',
+            #     'SOP',
+            #     'COBYLA',
+            #     'TURBO',
+            #     'COBYQA',
+            #     'CUATRO',
+            #     'CUATRO-pls',
+            #     'BO',
+            # ]
+            # else:
+            #     legend_cust = [
+            #         'LSQM',
+            #         'SNOBFIT',
+            #         'SRBF',
+            #         'DYCORS',
+            #         'SOP',
+            #         'COBYLA',
+            #         'COBYQA',
+            #         'CUATRO',
+            #         'BO',
+            #         'ENTMOOT',
+            #     ]
+
+            legend_cust = [alg.__name__ for alg in algs_test]
 
             for alg, label in zip(algs_test, legend_cust):
                 alg_index = alg_indices[alg]
