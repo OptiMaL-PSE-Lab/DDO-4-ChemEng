@@ -4,7 +4,9 @@ Welcome to the DDO-4-ChemEng repository!
 
 Repository for the book chapter "Data-Driven Optimization for Chemical Processes: Machine Learning and Artificial Intelligence" 📚
 
-<img src="https://github.com/user-attachments/assets/d6947842-468b-49d2-b6e8-993467dbf549" alt="Image description" style="width: 75%; max-width: 600px;">
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/d6947842-468b-49d2-b6e8-993467dbf549" alt="Image description" style="width: 75%; max-width: 600px;">
+</div>
 
 ## arXiv Link: Coming Soon!
 
